@@ -3,107 +3,122 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>File System Monitor — Logs</title>
+  <title>Surveillance Fichiers — Logs</title>
   <style>
     /* ── Variables ──────────────────────────────────────────── */
     :root {
-      --bg:        #0b0f1a;
-      --surface:   #111827;
-      --surface2:  #1a2236;
-      --border:    #1f2d45;
-      --text:      #e2e8f0;
-      --muted:     #64748b;
-      --cyan:      #22d3ee;
-      --green:     #4ade80;
-      --yellow:    #fbbf24;
-      --orange:    #fb923c;
-      --red:       #f87171;
-      --blue:      #60a5fa;
-      --radius:    8px;
+      --bg:       #0c0c0c;
+      --surface:  #161616;
+      --surface2: #202020;
+      --border:   #2e2e2e;
+      --text:     #f1f5f9;
+      --muted:    #6b7280;
+      --red:      #dc2626;
+      --red-soft: #ef4444;
+      --orange:   #d97706;
+      --green:    #16a34a;
+      --green-s:  #22c55e;
+      --purple:   #7c3aed;
+      --yellow:   #ca8a04;
+      --radius:   7px;
     }
 
-    /* ── Reset & base ───────────────────────────────────────── */
+    /* ── Reset ───────────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; }
     body {
       font-family: 'Segoe UI', system-ui, sans-serif;
       background: var(--bg);
       color: var(--text);
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
+      display: flex; flex-direction: column; min-height: 100vh;
     }
-    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-track { background: var(--bg); }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-    /* ── Header ─────────────────────────────────────────────── */
+    /* ── Header ──────────────────────────────────────────────── */
     header {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 18px 28px;
+      display: flex; align-items: center; gap: 14px;
+      padding: 16px 26px;
       background: var(--surface);
       border-bottom: 1px solid var(--border);
       position: sticky; top: 0; z-index: 100;
     }
-    .header-icon { font-size: 22px; }
-    .header-title { font-size: 18px; font-weight: 700; letter-spacing: -.3px; flex: 1; }
-    .header-title span { color: var(--cyan); }
+    .header-badge {
+      background: var(--red);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+    .header-title { font-size: 16px; font-weight: 700; flex: 1; }
+    .header-title em { color: var(--muted); font-style: normal; font-weight: 400; font-size: 13px; margin-left: 8px; }
 
-    /* ── Status pill ────────────────────────────────────────── */
+    /* ── Status pill ─────────────────────────────────────────── */
     #status-pill {
       display: flex; align-items: center; gap: 7px;
-      padding: 5px 13px; border-radius: 20px;
+      padding: 5px 12px; border-radius: 20px;
       font-size: 12px; font-weight: 600; letter-spacing: .3px;
-      background: #16213a; border: 1px solid var(--border); transition: all .3s;
+      background: var(--surface2); border: 1px solid var(--border); transition: all .3s;
     }
-    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); transition: background .3s; }
-    #status-pill.connected  { border-color: var(--green); color: var(--green); }
-    #status-pill.connected .dot { background: var(--green); animation: pulse 1.8s infinite; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); transition: background .3s; }
+    #status-pill.connected   { border-color: var(--green-s); color: var(--green-s); }
+    #status-pill.connected .dot { background: var(--green-s); animation: pulse 1.8s infinite; }
     #status-pill.disconnected { border-color: var(--red); color: var(--red); }
     #status-pill.disconnected .dot { background: var(--red); }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.3; } }
+
+    /* ── Header buttons ──────────────────────────────────────── */
+    .header-btn {
+      padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border);
+      background: var(--surface2); color: var(--muted);
+      font-size: 12px; cursor: pointer; transition: all .15s;
+    }
+    .header-btn:hover { border-color: var(--red); color: var(--text); }
 
     /* ── Main ────────────────────────────────────────────────── */
-    main { flex: 1; padding: 24px 28px; display: flex; flex-direction: column; gap: 20px; max-width: 1400px; width: 100%; margin: 0 auto; }
+    main { flex: 1; padding: 22px 26px; display: flex; flex-direction: column; gap: 18px; max-width: 1400px; width: 100%; margin: 0 auto; }
 
-    /* ── Stats cards ─────────────────────────────────────────── */
-    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    /* ── Stats ───────────────────────────────────────────────── */
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
     .stat-card {
-      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-      padding: 16px 20px; display: flex; flex-direction: column; gap: 4px; transition: border-color .2s;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px 18px;
+      display: flex; flex-direction: column; gap: 3px; transition: border-color .2s;
     }
-    .stat-card:hover { border-color: var(--cyan); }
-    .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
-    .stat-value { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
-    .stat-card.total .stat-value { color: var(--cyan); }
-    .stat-card.info  .stat-value { color: var(--blue); }
+    .stat-card:hover { border-color: #444; }
+    .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); }
+    .stat-value { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .stat-card.total .stat-value { color: var(--text); }
+    .stat-card.info  .stat-value { color: var(--purple); }
     .stat-card.warn  .stat-value { color: var(--orange); }
     .stat-card.error .stat-value { color: var(--red); }
 
     /* ── Toolbar ─────────────────────────────────────────────── */
-    .toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-    .filter-group { display: flex; gap: 6px; }
+    .toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .filter-group { display: flex; gap: 5px; }
     .btn {
-      padding: 7px 16px; border-radius: 6px; border: 1px solid var(--border);
+      padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border);
       background: var(--surface); color: var(--muted);
       font-size: 12px; font-weight: 600; cursor: pointer; letter-spacing: .4px; transition: all .15s;
     }
-    .btn:hover { border-color: var(--cyan); color: var(--text); }
-    .btn.active       { background: var(--cyan);   border-color: var(--cyan);   color: var(--bg); }
-    .btn.active.warn  { background: var(--orange);  border-color: var(--orange); }
-    .btn.active.error { background: var(--red);     border-color: var(--red); }
-    .btn.active.info  { background: var(--blue);    border-color: var(--blue); }
-    .btn-icon { padding: 7px 12px; font-size: 14px; }
+    .btn:hover { border-color: #555; color: var(--text); }
+    .btn.active       { background: var(--red);    border-color: var(--red);    color: #fff; }
+    .btn.active.warn  { background: var(--orange);  border-color: var(--orange); color: #fff; }
+    .btn.active.info  { background: var(--purple);  border-color: var(--purple); color: #fff; }
+    .btn.active.ok    { background: var(--green);   border-color: var(--green);  color: #fff; }
+    .btn-icon { padding: 6px 10px; font-size: 13px; }
     .search-wrap { flex: 1; min-width: 160px; }
     .search-input {
-      width: 100%; padding: 7px 12px; background: var(--surface);
-      border: 1px solid var(--border); border-radius: 6px;
-      color: var(--text); font-size: 13px; outline: none; transition: border-color .15s;
+      width: 100%; padding: 6px 12px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 6px; color: var(--text); font-size: 13px; outline: none; transition: border-color .15s;
     }
     .search-input::placeholder { color: var(--muted); }
-    .search-input:focus { border-color: var(--cyan); }
+    .search-input:focus { border-color: #555; }
 
     /* ── Log panel ───────────────────────────────────────────── */
     .log-panel {
@@ -112,176 +127,190 @@
     }
     .log-panel-header {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 10px 16px; border-bottom: 1px solid var(--border);
-      font-size: 12px; color: var(--muted);
+      padding: 9px 14px; border-bottom: 1px solid var(--border);
+      font-size: 11.5px; color: var(--muted);
     }
-    #log-count { font-weight: 600; color: var(--text); }
-    #log-list { flex: 1; overflow-y: auto; max-height: calc(100vh - 340px); min-height: 300px; }
+    #log-count { font-weight: 700; color: var(--text); }
+    #log-list { flex: 1; overflow-y: auto; max-height: calc(100vh - 330px); min-height: 300px; }
 
     /* ── Log entry ───────────────────────────────────────────── */
     .log-entry {
       display: grid;
-      grid-template-columns: 195px 80px 1fr auto;
-      border-bottom: 1px solid #151e30;
-      font-size: 12.5px;
+      grid-template-columns: 190px 78px 1fr auto;
+      border-bottom: 1px solid #191919;
+      font-size: 12px;
       font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
-      animation: fadeIn .25s ease;
-      cursor: default;
-      transition: background .1s;
+      animation: fadeIn .2s ease;
+      cursor: default; transition: background .1s;
     }
     .log-entry:hover { background: var(--surface2); }
     .log-entry.has-details { cursor: pointer; }
-    .log-entry.has-details:hover { background: #16253a; }
-    .log-entry.new          { animation: flashIn .6s ease; }
-    .log-entry.new.level-WARNING { animation: flashWarn .6s ease; }
-    .log-entry.new.level-ERROR   { animation: flashErr  .6s ease; }
-    @keyframes fadeIn   { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
-    @keyframes flashIn  { 0% { background: #0e2a1f; } 100% { background: transparent; } }
-    @keyframes flashWarn{ 0% { background: #2a1e0a; } 100% { background: transparent; } }
-    @keyframes flashErr { 0% { background: #2a0e0e; } 100% { background: transparent; } }
+    .log-entry.has-details:hover { background: #1a1010; }
+    .log-entry.new              { animation: flashIn   .5s ease; }
+    .log-entry.new.level-WARNING { animation: flashWarn .5s ease; }
+    .log-entry.new.level-ERROR   { animation: flashErr  .5s ease; }
+    @keyframes fadeIn   { from { opacity:0; transform:translateY(-3px); } to { opacity:1; transform:none; } }
+    @keyframes flashIn  { 0% { background:#0d1f0d; } 100% { background:transparent; } }
+    @keyframes flashWarn{ 0% { background:#1f150a; } 100% { background:transparent; } }
+    @keyframes flashErr { 0% { background:#1f0a0a; } 100% { background:transparent; } }
 
     .log-cell {
-      padding: 7px 12px; border-right: 1px solid #151e30;
+      padding: 6px 11px; border-right: 1px solid #191919;
       display: flex; align-items: center;
     }
     .log-cell:last-child { border-right: none; }
-    .log-ts  { color: var(--muted); font-size: 11.5px; }
-    .log-lvl { font-weight: 700; font-size: 11px; letter-spacing: .5px; justify-content: center; }
-    .log-msg { color: var(--text); word-break: break-all; flex: 1; }
-    .log-expand { color: var(--muted); font-size: 11px; padding: 7px 10px; white-space: nowrap; }
-    .log-entry.has-details .log-expand { color: var(--orange); }
+    .log-ts  { color: var(--muted); font-size: 11px; }
+    .log-lvl { font-weight: 700; font-size: 10.5px; letter-spacing: .5px; justify-content: center; }
+    .log-msg { color: var(--text); word-break: break-all; }
+    .log-expand { color: var(--muted); font-size: 10.5px; padding: 6px 10px; white-space: nowrap; gap: 4px; }
+    .log-entry.has-details .log-expand { color: var(--red-soft); }
 
-    .level-INFO    .log-lvl { color: var(--blue); }
+    .level-INFO    .log-lvl { color: var(--purple); }
     .level-WARNING .log-lvl { color: var(--orange); }
     .level-ERROR   .log-lvl { color: var(--red); }
 
-    /* Message keyword highlights */
-    .kw-alerte { color: var(--red);   font-weight: 700; }
-    .kw-detect { color: var(--green); font-weight: 700; }
-    .kw-ok     { color: var(--green); }
-    .kw-admin  { color: var(--cyan); }
+    .kw-alerte { color: var(--red);      font-weight: 700; }
+    .kw-detect { color: var(--green-s);  font-weight: 700; }
+    .kw-ok     { color: var(--green-s); }
+    .kw-admin  { color: #60a5fa; }
     .kw-err    { color: var(--red); }
-    .kw-watch  { color: var(--cyan); }
-    .kw-hash   { color: var(--yellow); font-size: 11px; }
+    .kw-watch  { color: #60a5fa; }
+    .kw-hash   { color: var(--yellow); font-size: 10.5px; }
 
     /* ── Empty state ─────────────────────────────────────────── */
     #empty-state {
       display: flex; flex-direction: column; align-items: center;
       justify-content: center; gap: 10px; padding: 60px 20px; color: var(--muted);
     }
-    #empty-state .icon { font-size: 40px; opacity: .4; }
+    #empty-state .icon { font-size: 36px; opacity: .3; }
     #empty-state p { font-size: 14px; }
 
     /* ── Modal ───────────────────────────────────────────────── */
-    #modal-overlay {
-      display: none;
-      position: fixed; inset: 0;
-      background: rgba(0, 0, 0, 0.65);
-      backdrop-filter: blur(4px);
-      z-index: 600;
-      align-items: center;
-      justify-content: center;
+    .overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.7); backdrop-filter: blur(4px);
+      z-index: 600; align-items: center; justify-content: center;
     }
-    #modal-overlay.open { display: flex; }
+    .overlay.open { display: flex; }
+
+    /* Alert modal */
     #modal {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      width: min(540px, 92vw);
-      max-height: 80vh;
-      overflow: hidden;
-      display: flex; flex-direction: column;
-      box-shadow: 0 32px 80px rgba(0,0,0,.8);
-      animation: modalIn .2s ease;
+      background: var(--surface); border: 1px solid #3f1515;
+      border-top: 3px solid var(--red);
+      border-radius: 10px; width: min(560px, 93vw); max-height: 82vh;
+      overflow: hidden; display: flex; flex-direction: column;
+      box-shadow: 0 24px 80px rgba(0,0,0,.85);
+      animation: modalIn .18s ease;
     }
-    @keyframes modalIn { from { opacity: 0; transform: scale(.96) translateY(8px); } to { opacity: 1; transform: none; } }
+    @keyframes modalIn { from { opacity:0; transform:scale(.96) translateY(6px); } to { opacity:1; transform:none; } }
+
     .modal-header {
       display: flex; align-items: flex-start; gap: 12px;
-      padding: 18px 20px 14px;
+      padding: 16px 18px 12px;
       border-bottom: 1px solid var(--border);
-      background: #0f1826;
+      background: #0f0808;
     }
-    .modal-icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+    .modal-icon { font-size: 17px; flex-shrink: 0; margin-top: 2px; }
+    .modal-title-wrap { flex: 1; min-width: 0; }
     .modal-title {
-      flex: 1;
-      font-family: 'Cascadia Code', 'Fira Code', monospace;
-      font-size: 12.5px; font-weight: 600; line-height: 1.5;
-      color: var(--red); word-break: break-all;
+      font-family: 'Cascadia Code', monospace; font-size: 12px; font-weight: 600;
+      color: var(--red-soft); line-height: 1.5; word-break: break-all;
     }
-    .modal-ts {
-      font-size: 10.5px; color: var(--muted); margin-top: 4px;
-      font-family: 'Segoe UI', sans-serif; font-weight: 400;
-    }
-    .modal-close {
-      color: var(--muted); font-size: 18px; cursor: pointer;
-      flex-shrink: 0; padding: 0 2px; line-height: 1;
-    }
+    .modal-ts { font-size: 10px; color: var(--muted); margin-top: 3px; }
+    .modal-close { color: var(--muted); font-size: 17px; cursor: pointer; flex-shrink: 0; line-height: 1; }
     .modal-close:hover { color: var(--text); }
-
-    .modal-body { padding: 16px 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+    .modal-body { padding: 14px 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
 
     .modal-detail {
-      font-family: 'Cascadia Code', 'Fira Code', monospace;
-      font-size: 11.5px; line-height: 1.7;
-      padding: 11px 14px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      word-break: break-all;
+      font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 11.5px; line-height: 1.8;
+      padding: 10px 13px; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 6px; word-break: break-all;
     }
     .modal-detail.perm  { border-left: 3px solid var(--orange); }
-    .modal-detail.state { border-left: 3px solid #334155; }
+    .modal-detail.state { border-left: 3px solid #2a2a3a; }
 
-    .d-label { color: var(--muted); }
+    .d-label { color: var(--muted); font-size: 10.5px; text-transform: uppercase; letter-spacing: .5px; display: block; margin-bottom: 6px; }
     .d-old   { color: var(--orange); font-weight: 600; }
-    .d-new   { color: var(--green);  font-weight: 600; }
-    .d-arrow { color: var(--muted); margin: 0 6px; }
+    .d-new   { color: var(--green-s); font-weight: 600; }
+    .d-arrow { color: var(--muted); margin: 0 8px; }
+    .d-perm-block { display: flex; flex-direction: column; gap: 3px; font-size: 11px; }
+    .d-perm-row   { display: flex; gap: 8px; }
+    .d-perm-actor { color: var(--muted); width: 90px; flex-shrink: 0; }
+    .d-key { color: var(--purple); }
+    .d-val { color: var(--yellow); }
+    .d-str { color: var(--green-s); }
+    .d-special { color: var(--red-soft); font-style: italic; margin-top: 4px; font-size: 10.5px; }
 
-    /* State dict key/value formatting */
-    .d-key   { color: var(--cyan); }
-    .d-val   { color: var(--yellow); }
-    .d-str   { color: var(--green); }
-
-    /* ── Toast notification ──────────────────────────────────── */
-    #toast-container {
-      position: fixed; bottom: 24px; right: 24px;
-      display: flex; flex-direction: column; gap: 10px; z-index: 999;
+    /* ── Discord settings modal ──────────────────────────────── */
+    #discord-modal {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; width: min(460px, 93vw);
+      overflow: hidden; display: flex; flex-direction: column;
+      box-shadow: 0 24px 80px rgba(0,0,0,.8);
+      animation: modalIn .18s ease;
     }
+    .discord-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 16px; border-bottom: 1px solid var(--border);
+      background: var(--surface2);
+    }
+    .discord-header h3 { flex: 1; font-size: 14px; font-weight: 700; }
+    .discord-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; }
+    .form-input {
+      padding: 8px 12px; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 6px; color: var(--text); font-size: 12.5px; outline: none; transition: border-color .15s;
+    }
+    .form-input:focus { border-color: #555; }
+    .form-hint { font-size: 10.5px; color: var(--muted); }
+    .discord-footer { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border); }
+    .btn-save {
+      flex: 1; padding: 8px; background: var(--green); border: none;
+      border-radius: 6px; color: #fff; font-size: 13px; font-weight: 700; cursor: pointer;
+    }
+    .btn-save:hover { background: #15803d; }
+    .btn-test {
+      padding: 8px 14px; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 6px; color: var(--text); font-size: 12px; cursor: pointer;
+    }
+    .btn-test:hover { border-color: #555; }
+
+    /* ── Toast ───────────────────────────────────────────────── */
+    #toast-container { position: fixed; bottom: 22px; right: 22px; display: flex; flex-direction: column; gap: 8px; z-index: 999; }
     .toast {
-      display: flex; align-items: flex-start; gap: 12px;
-      min-width: 300px; max-width: 420px;
-      padding: 14px 16px;
+      display: flex; align-items: flex-start; gap: 10px;
+      min-width: 290px; max-width: 400px;
+      padding: 12px 14px;
       background: var(--surface2); border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: 0 8px 32px rgba(0,0,0,.5);
-      animation: slideIn .3s ease; cursor: pointer;
+      border-radius: var(--radius); box-shadow: 0 8px 32px rgba(0,0,0,.6);
+      animation: slideIn .25s ease; cursor: pointer;
     }
-    .toast:hover { border-color: var(--cyan); }
-    @keyframes slideIn  { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: none; } }
-    @keyframes slideOut { to   { opacity: 0; transform: translateX(20px); } }
-    .toast-icon  { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .toast:hover { border-color: #555; }
+    @keyframes slideIn  { from { opacity:0; transform:translateX(16px); } to { opacity:1; transform:none; } }
+    @keyframes slideOut { to   { opacity:0; transform:translateX(16px); } }
+    .toast-icon  { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
     .toast-body  { flex: 1; min-width: 0; }
-    .toast-title { font-size: 12px; font-weight: 700; margin-bottom: 3px; }
-    .toast-msg   { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .toast-title { font-size: 11.5px; font-weight: 700; margin-bottom: 2px; }
+    .toast-msg   { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .toast.warn  { border-left: 3px solid var(--orange); }
     .toast.error { border-left: 3px solid var(--red); }
-    .toast.info  { border-left: 3px solid var(--blue); }
-    .toast-close { color: var(--muted); font-size: 16px; flex-shrink: 0; line-height: 1; padding: 0 2px; cursor: pointer; }
+    .toast.info  { border-left: 3px solid var(--purple); }
+    .toast-close { color: var(--muted); font-size: 15px; flex-shrink: 0; cursor: pointer; line-height: 1; }
     .toast-close:hover { color: var(--text); }
 
     /* ── Scroll button ───────────────────────────────────────── */
     #scroll-btn {
-      display: none; position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-      padding: 8px 20px; background: var(--cyan); color: var(--bg);
-      border-radius: 20px; font-size: 12px; font-weight: 700; border: none; cursor: pointer;
-      box-shadow: 0 4px 20px rgba(34,211,238,.3); z-index: 50; animation: fadeIn .2s ease;
+      display: none; position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+      padding: 7px 18px; background: var(--red); color: #fff;
+      border-radius: 20px; font-size: 11.5px; font-weight: 700; border: none; cursor: pointer;
+      box-shadow: 0 4px 20px rgba(220,38,38,.4); z-index: 50;
     }
 
     @media (max-width: 700px) {
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
       .log-entry  { grid-template-columns: 1fr; }
-      .log-cell   { border-right: none; padding: 4px 12px; }
-      .log-ts     { font-size: 10px; }
+      .log-cell   { border-right: none; padding: 4px 11px; }
     }
   </style>
 </head>
@@ -289,8 +318,12 @@
 
 <!-- ── Header ─────────────────────────────────────────────── -->
 <header>
-  <div class="header-icon">🛡️</div>
-  <div class="header-title">File System <span>Monitor</span></div>
+  <div class="header-badge">SÉCURITÉ</div>
+  <div class="header-title">
+    Surveillance Fichiers
+    <em>monitor.log</em>
+  </div>
+  <button class="header-btn" onclick="openDiscordModal()" title="Configurer Discord">⚙ Discord</button>
   <div id="status-pill">
     <div class="dot"></div>
     <span id="status-text">Connexion...</span>
@@ -301,36 +334,24 @@
 <main>
   <!-- Stats -->
   <div class="stats-grid">
-    <div class="stat-card total">
-      <div class="stat-label">Total</div>
-      <div class="stat-value" id="stat-total">0</div>
-    </div>
-    <div class="stat-card info">
-      <div class="stat-label">Info</div>
-      <div class="stat-value" id="stat-info">0</div>
-    </div>
-    <div class="stat-card warn">
-      <div class="stat-label">Warning</div>
-      <div class="stat-value" id="stat-warn">0</div>
-    </div>
-    <div class="stat-card error">
-      <div class="stat-label">Error</div>
-      <div class="stat-value" id="stat-error">0</div>
-    </div>
+    <div class="stat-card total"><div class="stat-label">Total événements</div><div class="stat-value" id="stat-total">0</div></div>
+    <div class="stat-card info" ><div class="stat-label">Informations</div>   <div class="stat-value" id="stat-info">0</div></div>
+    <div class="stat-card warn" ><div class="stat-label">Avertissements</div> <div class="stat-value" id="stat-warn">0</div></div>
+    <div class="stat-card error"><div class="stat-label">Erreurs</div>        <div class="stat-value" id="stat-error">0</div></div>
   </div>
 
   <!-- Toolbar -->
   <div class="toolbar">
     <div class="filter-group">
       <button class="btn active" id="btn-all"     onclick="setFilter('ALL')">Tous</button>
-      <button class="btn info"   id="btn-info"    onclick="setFilter('INFO')">INFO</button>
-      <button class="btn warn"   id="btn-warning" onclick="setFilter('WARNING')">WARNING</button>
-      <button class="btn error"  id="btn-error"   onclick="setFilter('ERROR')">ERROR</button>
+      <button class="btn info"   id="btn-info"    onclick="setFilter('INFO')">Info</button>
+      <button class="btn warn"   id="btn-warning" onclick="setFilter('WARNING')">Avertissement</button>
+      <button class="btn error"  id="btn-error"   onclick="setFilter('ERROR')">Erreur</button>
     </div>
     <div class="search-wrap">
       <input class="search-input" id="search" type="text" placeholder="Rechercher dans les logs..." oninput="applyFilters()" />
     </div>
-    <button class="btn btn-icon" id="autoscroll-btn" onclick="toggleAutoScroll()" title="Auto-scroll">⬇ Auto</button>
+    <button class="btn btn-icon" id="autoscroll-btn" onclick="toggleAutoScroll()" title="Défilement auto">⬇ Auto</button>
     <button class="btn btn-icon" onclick="clearDisplay()" title="Vider l'affichage">🗑</button>
   </div>
 
@@ -338,54 +359,118 @@
   <div class="log-panel">
     <div class="log-panel-header">
       <span><span id="log-count">0</span> entrées affichées</span>
-      <span id="last-update" style="color:var(--muted);font-size:11px;">—</span>
+      <span id="last-update">—</span>
     </div>
     <div id="log-list">
       <div id="empty-state">
         <div class="icon">📋</div>
-        <p>Aucun log pour le moment. En attente d'événements...</p>
+        <p>Aucun événement pour le moment. En attente...</p>
       </div>
     </div>
   </div>
 </main>
 
-<!-- ── Modal détails ──────────────────────────────────────── -->
-<div id="modal-overlay" onclick="handleOverlayClick(event)">
+<!-- ── Modal alerte ────────────────────────────────────────── -->
+<div id="alert-overlay" class="overlay" onclick="handleAlertOverlay(event)">
   <div id="modal">
     <div class="modal-header">
       <div class="modal-icon">🚨</div>
-      <div style="flex:1;min-width:0">
+      <div class="modal-title-wrap">
         <div class="modal-title" id="modal-title"></div>
         <div class="modal-ts"   id="modal-ts"></div>
       </div>
-      <div class="modal-close" onclick="closeModal()">✕</div>
+      <div class="modal-close" onclick="closeAlertModal()">✕</div>
     </div>
     <div class="modal-body" id="modal-body"></div>
   </div>
 </div>
 
+<!-- ── Modal Discord ───────────────────────────────────────── -->
+<div id="discord-overlay" class="overlay" onclick="handleDiscordOverlay(event)">
+  <div id="discord-modal">
+    <div class="discord-header">
+      <span style="font-size:18px">🔔</span>
+      <h3>Notifications Discord</h3>
+      <div class="modal-close" onclick="closeDiscordModal()">✕</div>
+    </div>
+    <div class="discord-body">
+      <div class="form-group">
+        <label class="form-label">URL du Webhook Discord</label>
+        <input class="form-input" id="discord-webhook" type="text" placeholder="https://discord.com/api/webhooks/..." />
+        <span class="form-hint">Créez un webhook dans les paramètres de votre salon Discord → Intégrations</span>
+      </div>
+      <div class="form-group">
+        <label class="form-label">URL du panel (lien dans le message Discord)</label>
+        <input class="form-input" id="discord-panel-url" type="text" placeholder="http://IP_DU_SERVEUR:5000" />
+        <span class="form-hint">L'URL que vos collègues utiliseront pour accéder au panel</span>
+      </div>
+    </div>
+    <div class="discord-footer">
+      <button class="btn-test" onclick="testDiscord()">🧪 Tester</button>
+      <button class="btn-save" onclick="saveDiscordConfig()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── Toast container ────────────────────────────────────── -->
 <div id="toast-container"></div>
-
-<!-- ── Scroll button ──────────────────────────────────────── -->
 <button id="scroll-btn" onclick="scrollToBottom()">↓ Nouveaux logs</button>
 
 <script>
 /* ─────────────────────────────────────────────────────────────
-   State
+   Permissions → français lisible
    ───────────────────────────────────────────────────────────── */
-let allLogs      = [];
-let activeFilter = 'ALL';
-let autoScroll   = true;
-let userScrolled = false;
-let newWhileAway = 0;
+function parseOctalDigit(n) {
+  n = parseInt(n);
+  const parts = [];
+  if (n & 4) parts.push('Lecture');
+  if (n & 2) parts.push('Écriture');
+  if (n & 1) parts.push('Exécution');
+  return parts.length ? parts.join(' + ') : 'Aucun accès';
+}
 
-const logList       = document.getElementById('log-list');
-const emptyState    = document.getElementById('empty-state');
-const logCount      = document.getElementById('log-count');
-const lastUpdate    = document.getElementById('last-update');
-const scrollBtn     = document.getElementById('scroll-btn');
-const autoscrollBtn = document.getElementById('autoscroll-btn');
+function formatOctalMode(octalStr) {
+  const s = String(octalStr).replace(/^0[oO]/, '');
+  if (!s || s.length < 3) return octalStr;
+
+  let specials = [];
+  let perm = s;
+
+  if (s.length === 4) {
+    const sp = parseInt(s[0]);
+    perm = s.slice(1);
+    if (sp & 4) specials.push('SetUID — le fichier s\'exécute avec les droits du propriétaire');
+    if (sp & 2) specials.push('SetGID — le fichier s\'exécute avec les droits du groupe');
+    if (sp & 1) specials.push('Sticky bit — seul le propriétaire peut supprimer ce fichier');
+  }
+
+  return {
+    owner:   parseOctalDigit(perm[0]),
+    group:   parseOctalDigit(perm[1]),
+    others:  parseOctalDigit(perm[2]),
+    specials,
+    raw: octalStr,
+  };
+}
+
+function renderPermBlock(octalStr) {
+  const p = formatOctalMode(octalStr);
+  if (typeof p === 'string') return escHtml(octalStr);
+
+  let html = `<div class="d-perm-block">`;
+  html += `<div class="d-perm-row"><span class="d-perm-actor">Propriétaire :</span><span>${escHtml(p.owner)}</span></div>`;
+  html += `<div class="d-perm-row"><span class="d-perm-actor">Groupe :</span>      <span>${escHtml(p.group)}</span></div>`;
+  html += `<div class="d-perm-row"><span class="d-perm-actor">Autres :</span>      <span>${escHtml(p.others)}</span></div>`;
+  for (const s of p.specials) {
+    html += `<div class="d-special">⚠ ${escHtml(s)}</div>`;
+  }
+  html += `</div>`;
+  return html;
+}
+
+function formatUid(uid) {
+  return String(uid) === '0' ? `0 (root)` : String(uid);
+}
 
 /* ─────────────────────────────────────────────────────────────
    Helpers
@@ -413,70 +498,131 @@ function highlight(msg) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Modal
+   Modal alerte — rendu des détails en français
    ───────────────────────────────────────────────────────────── */
-function openModal(log) {
+function renderDetail(detail) {
+  const div = document.createElement('div');
+
+  // "Permissions modifiées : 0oXXX -> 0oYYY"
+  const permMatch = detail.match(/^Permissions modifi[ée]es\s*:\s*(0[oO]\d+)\s*->\s*(0[oO]\d+)$/i);
+  if (permMatch) {
+    div.className = 'modal-detail perm';
+    div.innerHTML = `<span class="d-label">Modification des permissions</span>`
+      + `<div style="display:flex;gap:24px;flex-wrap:wrap;">`
+      + `<div><div style="color:var(--muted);font-size:10px;margin-bottom:4px;">AVANT <span class="d-old">(${escHtml(permMatch[1])})</span></div>${renderPermBlock(permMatch[1])}</div>`
+      + `<div><div style="color:var(--muted);font-size:10px;margin-bottom:4px;">APRÈS <span class="d-new">(${escHtml(permMatch[2])})</span></div>${renderPermBlock(permMatch[2])}</div>`
+      + `</div>`;
+    return div;
+  }
+
+  // "Propriétaire/groupe modifiés : uid:gid -> uid:gid"
+  const uidMatch = detail.match(/^Propri[ée]taire\/groupe modifi[ée]s\s*:\s*(\S+)\s*->\s*(\S+)$/i);
+  if (uidMatch) {
+    div.className = 'modal-detail perm';
+    const [oldU, oldG] = uidMatch[1].split(':');
+    const [newU, newG] = uidMatch[2].split(':');
+    div.innerHTML = `<span class="d-label">Changement de propriétaire</span>`
+      + `<div>Propriétaire (UID) : <span class="d-old">${escHtml(formatUid(oldU))}</span> <span class="d-arrow">→</span> <span class="d-new">${escHtml(formatUid(newU))}</span></div>`
+      + `<div>Groupe (GID) : <span class="d-old">${escHtml(formatUid(oldG))}</span> <span class="d-arrow">→</span> <span class="d-new">${escHtml(formatUid(newG))}</span></div>`;
+    return div;
+  }
+
+  // "Ancien état : {…}" ou "Nouvel état : {…}"
+  const isAncien = /^ancien/i.test(detail);
+  const isNouvel = /^nouvel/i.test(detail);
+  if (isAncien || isNouvel) {
+    div.className = 'modal-detail state';
+    const colonIdx = detail.indexOf(' : ');
+    const label    = colonIdx !== -1 ? detail.substring(0, colonIdx) : detail;
+    const value    = colonIdx !== -1 ? detail.substring(colonIdx + 3) : '';
+    const colorized = escHtml(value).replace(
+      /'([^']+)':\s*('([^']*)'|([^,}]+))/g,
+      (_, key, rawVal, strVal) =>
+        strVal !== undefined
+          ? `<span class="d-key">'${key}'</span>: <span class="d-str">'${escHtml(strVal)}'</span>`
+          : `<span class="d-key">'${key}'</span>: <span class="d-val">${rawVal}</span>`
+    );
+    div.innerHTML = `<span class="d-label">${escHtml(label)}</span>${colorized}`;
+    return div;
+  }
+
+  // Ligne générique avec " -> "
+  if (detail.includes(' -> ')) {
+    div.className = 'modal-detail perm';
+    const colonIdx = detail.indexOf(' : ');
+    const label    = colonIdx !== -1 ? detail.substring(0, colonIdx) : '';
+    const rest     = colonIdx !== -1 ? detail.substring(colonIdx + 3) : detail;
+    const arrowIdx = rest.indexOf(' -> ');
+    const oldVal   = arrowIdx !== -1 ? rest.substring(0, arrowIdx) : rest;
+    const newVal   = arrowIdx !== -1 ? rest.substring(arrowIdx + 4) : '';
+    div.innerHTML  = `<span class="d-label">${escHtml(label)}</span>`
+      + `<span class="d-old">${escHtml(oldVal)}</span>`
+      + `<span class="d-arrow"> → </span>`
+      + `<span class="d-new">${escHtml(newVal)}</span>`;
+    return div;
+  }
+
+  // Fallback
+  div.className  = 'modal-detail';
+  div.innerHTML  = escHtml(detail);
+  return div;
+}
+
+function openAlertModal(log) {
   document.getElementById('modal-title').innerHTML = highlight(log.message);
   document.getElementById('modal-ts').textContent  = log.timestamp || '';
-
   const body = document.getElementById('modal-body');
   body.innerHTML = '';
+  (log.details || []).forEach(d => body.appendChild(renderDetail(d)));
+  document.getElementById('alert-overlay').classList.add('open');
+}
+function closeAlertModal()  { document.getElementById('alert-overlay').classList.remove('open'); }
+function handleAlertOverlay(e) { if (e.target === document.getElementById('alert-overlay')) closeAlertModal(); }
 
-  (log.details || []).forEach(detail => {
-    const div = document.createElement('div');
+/* ─────────────────────────────────────────────────────────────
+   Discord modal
+   ───────────────────────────────────────────────────────────── */
+async function openDiscordModal() {
+  const cfg = await fetch('/api/discord-config').then(r => r.json()).catch(() => ({}));
+  document.getElementById('discord-webhook').value    = cfg.webhook_url || '';
+  document.getElementById('discord-panel-url').value  = cfg.panel_url   || 'http://localhost:5000';
+  document.getElementById('discord-overlay').classList.add('open');
+}
+function closeDiscordModal() { document.getElementById('discord-overlay').classList.remove('open'); }
+function handleDiscordOverlay(e) { if (e.target === document.getElementById('discord-overlay')) closeDiscordModal(); }
 
-    // Classement visuel de la ligne
-    const isPerm  = /permissions|propri/i.test(detail);
-    const isState = /état|etat|ancien|nouvel/i.test(detail);
-    div.className = `modal-detail${isPerm ? ' perm' : isState ? ' state' : ''}`;
-
-    // "Label : OLD -> NEW"
-    if (detail.includes(' -> ')) {
-      const colonIdx = detail.indexOf(' : ');
-      const label    = detail.substring(0, colonIdx);
-      const rest     = detail.substring(colonIdx + 3);
-      const arrowIdx = rest.indexOf(' -> ');
-      const oldVal   = rest.substring(0, arrowIdx);
-      const newVal   = rest.substring(arrowIdx + 4);
-      div.innerHTML  = `<span class="d-label">${escHtml(label)} : </span>`
-                     + `<span class="d-old">${escHtml(oldVal)}</span>`
-                     + `<span class="d-arrow">→</span>`
-                     + `<span class="d-new">${escHtml(newVal)}</span>`;
-
-    // "Label : {dict}"
-    } else if (detail.includes(' : ')) {
-      const colonIdx = detail.indexOf(' : ');
-      const label    = detail.substring(0, colonIdx);
-      const value    = detail.substring(colonIdx + 3);
-      // Colorize dict keys
-      const colorized = escHtml(value).replace(
-        /'([^']+)':\s*('([^']*)'|([^,}]+))/g,
-        (_, key, rawVal, strVal) =>
-          strVal !== undefined
-            ? `<span class="d-key">'${key}'</span>: <span class="d-str">'${escHtml(strVal)}'</span>`
-            : `<span class="d-key">'${key}'</span>: <span class="d-val">${rawVal}</span>`
-      );
-      div.innerHTML  = `<span class="d-label">${escHtml(label)} :</span><br>${colorized}`;
-
-    } else {
-      div.innerHTML = escHtml(detail);
-    }
-
-    body.appendChild(div);
-  });
-
-  document.getElementById('modal-overlay').classList.add('open');
+async function saveDiscordConfig() {
+  const payload = {
+    webhook_url: document.getElementById('discord-webhook').value.trim(),
+    panel_url:   document.getElementById('discord-panel-url').value.trim(),
+  };
+  await fetch('/api/discord-config', { method: 'POST', body: JSON.stringify(payload), headers: {'Content-Type': 'application/json'} });
+  closeDiscordModal();
+  showSimpleToast('✅ Configuration Discord enregistrée', 'info');
 }
 
-function closeModal() {
-  document.getElementById('modal-overlay').classList.remove('open');
+async function testDiscord() {
+  const webhookUrl = document.getElementById('discord-webhook').value.trim();
+  const panelUrl   = document.getElementById('discord-panel-url').value.trim();
+  if (!webhookUrl) { showSimpleToast('⚠ Entrez d\'abord une URL de webhook', 'warn'); return; }
+  const payload = {
+    embeds: [{
+      title: '🧪 Test de notification — Surveillance Fichiers',
+      description: `Le panel de surveillance est opérationnel.\n\n🔗 **[Accéder au panel](${panelUrl || 'http://localhost:5000'})**`,
+      color: 0x16a34a,
+      footer: { text: 'File System Monitor — Test' },
+    }]
+  };
+  try {
+    const res = await fetch(webhookUrl, { method: 'POST', body: JSON.stringify(payload), headers: {'Content-Type': 'application/json'} });
+    if (res.ok) showSimpleToast('✅ Message test envoyé sur Discord !', 'info');
+    else        showSimpleToast('❌ Erreur Discord : vérifiez l\'URL du webhook', 'error');
+  } catch {
+    showSimpleToast('❌ Impossible d\'envoyer le message', 'error');
+  }
 }
 
-function handleOverlayClick(e) {
-  if (e.target === document.getElementById('modal-overlay')) closeModal();
-}
-
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeAlertModal(); closeDiscordModal(); } });
 
 /* ─────────────────────────────────────────────────────────────
    Build a log entry DOM element
@@ -487,55 +633,60 @@ function buildEntry(log, isNew = false) {
   div.className = `log-entry level-${log.level}${isNew ? ' new' : ''}${hasDetails ? ' has-details' : ''}`;
   div.dataset.level = log.level;
   div.dataset.raw   = (log.raw || '').toLowerCase();
-
   div.innerHTML = `
     <div class="log-cell log-ts">${log.timestamp || '—'}</div>
     <div class="log-cell log-lvl">${log.level}</div>
     <div class="log-cell log-msg">${highlight(log.message)}</div>
     <div class="log-cell log-expand">${hasDetails ? '▶ détails' : ''}</div>
   `;
-
-  if (hasDetails) {
-    div.addEventListener('click', () => openModal(log));
-  }
-
+  if (hasDetails) div.addEventListener('click', () => openAlertModal(log));
   return div;
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Render all logs
+   State & render
    ───────────────────────────────────────────────────────────── */
+let allLogs      = [];
+let activeFilter = 'ALL';
+let autoScroll   = true;
+let userScrolled = false;
+let newWhileAway = 0;
+
+const logList       = document.getElementById('log-list');
+const emptyState    = document.getElementById('empty-state');
+const logCount      = document.getElementById('log-count');
+const lastUpdate    = document.getElementById('last-update');
+const scrollBtn     = document.getElementById('scroll-btn');
+const autoscrollBtn = document.getElementById('autoscroll-btn');
+
 function renderAll() {
   const search = document.getElementById('search').value.toLowerCase();
   logList.querySelectorAll('.log-entry').forEach(e => e.remove());
 
   const filtered = allLogs.filter(l => {
     const levelOk  = activeFilter === 'ALL' || l.level === activeFilter;
-    const searchOk = !search || (l.raw || '').toLowerCase().includes(search)
-                              || (l.details || []).join(' ').toLowerCase().includes(search);
+    const searchOk = !search
+      || (l.raw || '').toLowerCase().includes(search)
+      || (l.details || []).join(' ').toLowerCase().includes(search);
     return levelOk && searchOk;
   });
 
   emptyState.style.display = filtered.length === 0 ? 'flex' : 'none';
-
   const frag = document.createDocumentFragment();
   filtered.forEach(l => frag.appendChild(buildEntry(l)));
   logList.appendChild(frag);
-
   logCount.textContent = filtered.length;
 }
 
-/* ─────────────────────────────────────────────────────────────
-   Append single entry (SSE push)
-   ───────────────────────────────────────────────────────────── */
 function appendEntry(log) {
   allLogs.push(log);
   updateStats(log.level, '+');
 
   const search   = document.getElementById('search').value.toLowerCase();
   const levelOk  = activeFilter === 'ALL' || log.level === activeFilter;
-  const searchOk = !search || (log.raw || '').toLowerCase().includes(search)
-                            || (log.details || []).join(' ').toLowerCase().includes(search);
+  const searchOk = !search
+    || (log.raw || '').toLowerCase().includes(search)
+    || (log.details || []).join(' ').toLowerCase().includes(search);
 
   if (levelOk && searchOk) {
     emptyState.style.display = 'none';
@@ -549,8 +700,8 @@ function appendEntry(log) {
     scrollToBottom();
   } else {
     newWhileAway++;
-    scrollBtn.style.display  = 'block';
-    scrollBtn.textContent = `↓ ${newWhileAway} nouveau${newWhileAway > 1 ? 'x' : ''} log${newWhileAway > 1 ? 's' : ''}`;
+    scrollBtn.style.display = 'block';
+    scrollBtn.textContent   = `↓ ${newWhileAway} nouveau${newWhileAway > 1 ? 'x' : ''} log${newWhileAway > 1 ? 's' : ''}`;
   }
 }
 
@@ -563,161 +714,121 @@ const statEls = {
   WARNING: document.getElementById('stat-warn'),
   ERROR:   document.getElementById('stat-error'),
 };
-
-function setStats(counts) {
-  statEls.TOTAL.textContent   = counts.TOTAL   || 0;
-  statEls.INFO.textContent    = counts.INFO    || 0;
-  statEls.WARNING.textContent = counts.WARNING || 0;
-  statEls.ERROR.textContent   = counts.ERROR   || 0;
+function setStats(c) {
+  statEls.TOTAL.textContent   = c.TOTAL   || 0;
+  statEls.INFO.textContent    = c.INFO    || 0;
+  statEls.WARNING.textContent = c.WARNING || 0;
+  statEls.ERROR.textContent   = c.ERROR   || 0;
 }
-
 function updateStats(level, op) {
   const inc = op === '+' ? 1 : -1;
-  statEls.TOTAL.textContent = Math.max(0, parseInt(statEls.TOTAL.textContent) + inc);
-  if (level === 'INFO')    statEls.INFO.textContent    = Math.max(0, parseInt(statEls.INFO.textContent)    + inc);
-  if (level === 'WARNING') statEls.WARNING.textContent = Math.max(0, parseInt(statEls.WARNING.textContent) + inc);
-  if (level === 'ERROR')   statEls.ERROR.textContent   = Math.max(0, parseInt(statEls.ERROR.textContent)   + inc);
+  statEls.TOTAL.textContent = Math.max(0, +statEls.TOTAL.textContent + inc);
+  if (level === 'INFO')    statEls.INFO.textContent    = Math.max(0, +statEls.INFO.textContent    + inc);
+  if (level === 'WARNING') statEls.WARNING.textContent = Math.max(0, +statEls.WARNING.textContent + inc);
+  if (level === 'ERROR')   statEls.ERROR.textContent   = Math.max(0, +statEls.ERROR.textContent   + inc);
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Filters
+   Filters & scroll
    ───────────────────────────────────────────────────────────── */
 function setFilter(level) {
   activeFilter = level;
   document.querySelectorAll('.filter-group .btn').forEach(b => b.classList.remove('active'));
-  const map = { ALL: 'btn-all', INFO: 'btn-info', WARNING: 'btn-warning', ERROR: 'btn-error' };
+  const map = { ALL:'btn-all', INFO:'btn-info', WARNING:'btn-warning', ERROR:'btn-error' };
   document.getElementById(map[level]).classList.add('active');
   renderAll();
 }
-
 function applyFilters() { renderAll(); }
 
-/* ─────────────────────────────────────────────────────────────
-   Auto-scroll
-   ───────────────────────────────────────────────────────────── */
 function scrollToBottom() {
   logList.scrollTop = logList.scrollHeight;
-  userScrolled = false;
-  newWhileAway = 0;
+  userScrolled = false; newWhileAway = 0;
   scrollBtn.style.display = 'none';
 }
-
 function toggleAutoScroll() {
   autoScroll = !autoScroll;
   autoscrollBtn.classList.toggle('active', autoScroll);
   if (autoScroll) scrollToBottom();
 }
-
 logList.addEventListener('scroll', () => {
   const atBottom = logList.scrollHeight - logList.scrollTop <= logList.clientHeight + 20;
-  if (!atBottom) {
-    userScrolled = true;
-  } else {
-    userScrolled = false;
-    newWhileAway = 0;
-    scrollBtn.style.display = 'none';
-  }
+  if (!atBottom) { userScrolled = true; }
+  else { userScrolled = false; newWhileAway = 0; scrollBtn.style.display = 'none'; }
 });
 
-/* ─────────────────────────────────────────────────────────────
-   Clear
-   ───────────────────────────────────────────────────────────── */
-function clearDisplay() {
-  allLogs = [];
-  renderAll();
-  setStats({ TOTAL: 0, INFO: 0, WARNING: 0, ERROR: 0 });
-}
+function clearDisplay() { allLogs = []; renderAll(); setStats({TOTAL:0,INFO:0,WARNING:0,ERROR:0}); }
 
 /* ─────────────────────────────────────────────────────────────
-   Toast notifications
+   Toasts
    ───────────────────────────────────────────────────────────── */
+function showSimpleToast(msg, type = 'info') {
+  const icons = { info:'ℹ️', warn:'⚠️', error:'🚨' };
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `<div class="toast-icon">${icons[type]||'ℹ️'}</div><div class="toast-body"><div class="toast-msg">${escHtml(msg)}</div></div><div class="toast-close" onclick="this.parentElement.remove()">✕</div>`;
+  document.getElementById('toast-container').appendChild(toast);
+  setTimeout(() => { if (toast.isConnected) { toast.style.animation='slideOut .25s ease forwards'; setTimeout(()=>toast.remove(),250); } }, 4000);
+}
+
 function showToast(log) {
   const level = log.level;
   if (level === 'INFO' && !log.message.includes('[DÉTECTION]') && !log.message.includes('[DETECTION]')) return;
-
-  const icons = { INFO: 'ℹ️', WARNING: '⚠️', ERROR: '🚨' };
-  const cls   = { INFO: 'info', WARNING: 'warn', ERROR: 'error' };
-
+  const icons = { INFO:'ℹ️', WARNING:'⚠️', ERROR:'🚨' };
+  const cls   = { INFO:'info', WARNING:'warn', ERROR:'error' };
   const toast = document.createElement('div');
-  toast.className = `toast ${cls[level] || 'info'}`;
+  toast.className = `toast ${cls[level]||'info'}`;
   toast.innerHTML = `
-    <div class="toast-icon">${icons[level] || 'ℹ️'}</div>
+    <div class="toast-icon">${icons[level]||'ℹ️'}</div>
     <div class="toast-body">
-      <div class="toast-title">${escHtml(level)} — ${escHtml(log.timestamp || '')}</div>
+      <div class="toast-title">${escHtml(level)} — ${escHtml(log.timestamp||'')}</div>
       <div class="toast-msg">${escHtml(log.message)}</div>
     </div>
     <div class="toast-close" onclick="event.stopPropagation();this.parentElement.remove()">✕</div>
   `;
-
   document.getElementById('toast-container').appendChild(toast);
-
-  toast.addEventListener('click', (e) => {
+  toast.addEventListener('click', e => {
     if (e.target.classList.contains('toast-close')) return;
     toast.remove();
-    if (log.details && log.details.length > 0) {
-      openModal(log);
-    } else {
-      setFilter('ALL');
-      scrollToBottom();
-    }
+    if (log.details && log.details.length > 0) openAlertModal(log);
+    else { setFilter('ALL'); scrollToBottom(); }
   });
-
   setTimeout(() => {
     if (!toast.isConnected) return;
-    toast.style.animation = 'slideOut .3s ease forwards';
-    setTimeout(() => toast.remove(), 300);
+    toast.style.animation = 'slideOut .25s ease forwards';
+    setTimeout(() => toast.remove(), 250);
   }, 6000);
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Initial load
+   Initial load + SSE
    ───────────────────────────────────────────────────────────── */
 async function loadHistory() {
   try {
     const [logsRes, statsRes] = await Promise.all([fetch('/api/logs'), fetch('/api/stats')]);
     const logs  = await logsRes.json();
     const stats = await statsRes.json();
-    allLogs = logs;
-    setStats(stats);
-    renderAll();
+    allLogs = logs; setStats(stats); renderAll();
     if (logs.length > 0) scrollToBottom();
     lastUpdate.textContent = 'Chargé à ' + new Date().toLocaleTimeString('fr-FR');
-  } catch (err) {
-    console.error('Erreur chargement logs:', err);
-  }
+  } catch (err) { console.error(err); }
 }
 
-/* ─────────────────────────────────────────────────────────────
-   SSE
-   ───────────────────────────────────────────────────────────── */
 const statusPill = document.getElementById('status-pill');
 const statusText = document.getElementById('status-text');
-
 function setStatus(connected) {
-  statusPill.className = connected ? 'connected' : 'disconnected';
-  statusText.textContent = connected ? 'Connecté' : 'Déconnecté';
+  statusPill.className  = connected ? 'connected' : 'disconnected';
+  statusText.textContent = connected ? 'En ligne' : 'Déconnecté';
 }
 
 function connectSSE() {
   const es = new EventSource('/api/stream');
   es.onopen = () => setStatus(true);
-  es.onmessage = (e) => {
-    try {
-      const log = JSON.parse(e.data);
-      appendEntry(log);
-      showToast(log);
-    } catch (_) {}
+  es.onmessage = e => {
+    try { const log = JSON.parse(e.data); appendEntry(log); showToast(log); } catch {}
   };
-  es.onerror = () => {
-    setStatus(false);
-    es.close();
-    setTimeout(connectSSE, 3000);
-  };
+  es.onerror = () => { setStatus(false); es.close(); setTimeout(connectSSE, 3000); };
 }
 
-/* ─────────────────────────────────────────────────────────────
-   Init
-   ───────────────────────────────────────────────────────────── */
 autoscrollBtn.classList.add('active');
 loadHistory().then(() => connectSSE());
 </script>
