@@ -35,19 +35,21 @@ def parse_log_line(line: str) -> dict | None:
 
     parts = line.split(" - ", 2)
     if len(parts) == 3:
-        timestamp, level, message = parts
+        timestamp, level, raw_msg = parts
+        is_detail = raw_msg.startswith(" - ") or raw_msg.startswith("  - ")
         return {
             "timestamp": timestamp.strip(),
             "level": level.strip().upper(),
-            "message": message.strip(),
+            "message": raw_msg.strip(),
             "raw": line,
+            "is_detail": is_detail,
         }
-    return {"timestamp": "", "level": "INFO", "message": line, "raw": line}
+    return {"timestamp": "", "level": "INFO", "message": line, "raw": line, "is_detail": False}
 
 
-def _is_detail_line(msg: str) -> bool:
-    """Une ligne de détail est une sous-ligne d'alerte (commence par ' - ')."""
-    return msg.startswith(" - ") or msg.startswith("  - ")
+def _is_detail_line(parsed: dict) -> bool:
+    """Une ligne de détail est une sous-ligne d'alerte (flag is_detail=True)."""
+    return parsed.get("is_detail", False)
 
 
 def group_logs(parsed_lines: list) -> list:
@@ -66,9 +68,8 @@ def group_logs(parsed_lines: list) -> list:
             details = []
             j = i + 1
             while j < len(parsed_lines):
-                next_msg = parsed_lines[j].get("message", "")
-                if _is_detail_line(next_msg):
-                    details.append(next_msg.strip())
+                if _is_detail_line(parsed_lines[j]):
+                    details.append(parsed_lines[j]["message"])
                     j += 1
                 else:
                     break
@@ -78,7 +79,7 @@ def group_logs(parsed_lines: list) -> list:
             groups.append(entry)
             i = j
 
-        elif _is_detail_line(msg):
+        elif _is_detail_line(line):
             # Ligne déjà consommée par un groupe précédent — ignorer
             i += 1
 
@@ -172,7 +173,7 @@ def get_stats():
         with open(LOG_FILE, "r", encoding="utf-8", errors="replace") as f:
             for line in f:
                 parsed = parse_log_line(line)
-                if parsed and not _is_detail_line(parsed["message"]):
+                if parsed and not _is_detail_line(parsed):
                     counts["TOTAL"] += 1
                     lvl = parsed["level"]
                     if lvl in counts:
