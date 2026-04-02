@@ -1,0 +1,13 @@
+{
+    "watch_directory": "D:\\YNOV\\B3\\Projet NTUMBA\\tmp",
+    "filename": "secret.txt",
+    "file_metadata": {
+        "path": "D:\\YNOV\\B3\\Projet NTUMBA\\tmp\\secret.txt",
+        "exists": true,
+        "mode": "0o666",
+        "uid": 0,
+        "gid": 0,
+        "mtime": 1775116877,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+}

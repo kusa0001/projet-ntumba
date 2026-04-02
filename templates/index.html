@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>File System Monitor — Logs</title>
+  <style>
+    /* ── Variables ──────────────────────────────────────────── */
+    :root {
+      --bg:        #0b0f1a;
+      --surface:   #111827;
+      --surface2:  #1a2236;
+      --border:    #1f2d45;
+      --text:      #e2e8f0;
+      --muted:     #64748b;
+      --cyan:      #22d3ee;
+      --green:     #4ade80;
+      --yellow:    #fbbf24;
+      --orange:    #fb923c;
+      --red:       #f87171;
+      --blue:      #60a5fa;
+      --radius:    8px;
+    }
+
+    /* ── Reset & base ───────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    /* scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ── Header ─────────────────────────────────────────────── */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 28px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .header-icon { font-size: 22px; }
+    .header-title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -.3px;
+      flex: 1;
+    }
+    .header-title span { color: var(--cyan); }
+
+    /* ── Status pill ────────────────────────────────────────── */
+    #status-pill {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 13px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .3px;
+      background: #16213a;
+      border: 1px solid var(--border);
+      transition: all .3s;
+    }
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--muted);
+      transition: background .3s;
+    }
+    #status-pill.connected { border-color: var(--green); color: var(--green); }
+    #status-pill.connected .dot { background: var(--green); animation: pulse 1.8s infinite; }
+    #status-pill.disconnected { border-color: var(--red); color: var(--red); }
+    #status-pill.disconnected .dot { background: var(--red); }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; } 50% { opacity: .35; }
+    }
+
+    /* ── Main layout ─────────────────────────────────────────── */
+    main { flex: 1; padding: 24px 28px; display: flex; flex-direction: column; gap: 20px; max-width: 1400px; width: 100%; margin: 0 auto; }
+
+    /* ── Stats cards ─────────────────────────────────────────── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      transition: border-color .2s;
+    }
+    .stat-card:hover { border-color: var(--cyan); }
+    .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+    .stat-value { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .stat-card.total  .stat-value { color: var(--cyan); }
+    .stat-card.info   .stat-value { color: var(--blue); }
+    .stat-card.warn   .stat-value { color: var(--orange); }
+    .stat-card.error  .stat-value { color: var(--red); }
+
+    /* ── Toolbar ─────────────────────────────────────────────── */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .filter-group { display: flex; gap: 6px; }
+    .btn {
+      padding: 7px 16px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: .4px;
+      transition: all .15s;
+    }
+    .btn:hover { border-color: var(--cyan); color: var(--text); }
+    .btn.active { background: var(--cyan); border-color: var(--cyan); color: var(--bg); }
+    .btn.active.warn  { background: var(--orange); border-color: var(--orange); }
+    .btn.active.error { background: var(--red); border-color: var(--red); }
+    .btn.active.info  { background: var(--blue); border-color: var(--blue); }
+
+    .search-wrap { flex: 1; min-width: 160px; }
+    .search-input {
+      width: 100%;
+      padding: 7px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+      transition: border-color .15s;
+    }
+    .search-input::placeholder { color: var(--muted); }
+    .search-input:focus { border-color: var(--cyan); }
+
+    .btn-icon {
+      padding: 7px 12px;
+      font-size: 14px;
+    }
+    .spacer { flex: 1; }
+
+    /* ── Log panel ───────────────────────────────────────────── */
+    .log-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .log-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--muted);
+    }
+    #log-count { font-weight: 600; color: var(--text); }
+
+    #log-list {
+      flex: 1;
+      overflow-y: auto;
+      max-height: calc(100vh - 340px);
+      min-height: 300px;
+    }
+
+    /* ── Log entry ───────────────────────────────────────────── */
+    .log-entry {
+      display: grid;
+      grid-template-columns: 195px 80px 1fr;
+      gap: 0;
+      border-bottom: 1px solid #151e30;
+      font-size: 12.5px;
+      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+      animation: fadeIn .25s ease;
+      cursor: default;
+      transition: background .1s;
+    }
+    .log-entry:hover { background: var(--surface2); }
+    .log-entry.new { animation: flashIn .6s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+    @keyframes flashIn { 0% { background: #0e2a1f; } 100% { background: transparent; } }
+    @keyframes flashWarn { 0% { background: #2a1e0a; } 100% { background: transparent; } }
+    @keyframes flashErr  { 0% { background: #2a0e0e; } 100% { background: transparent; } }
+    .log-entry.new.level-WARNING { animation: flashWarn .6s ease; }
+    .log-entry.new.level-ERROR   { animation: flashErr .6s ease; }
+
+    .log-cell {
+      padding: 7px 12px;
+      border-right: 1px solid #151e30;
+      display: flex;
+      align-items: center;
+    }
+    .log-cell:last-child { border-right: none; }
+
+    .log-ts  { color: var(--muted); font-size: 11.5px; }
+    .log-lvl { font-weight: 700; font-size: 11px; letter-spacing: .5px; justify-content: center; }
+    .log-msg { color: var(--text); word-break: break-all; }
+
+    /* Level colors */
+    .level-INFO    .log-lvl { color: var(--blue); }
+    .level-WARNING .log-lvl { color: var(--orange); }
+    .level-ERROR   .log-lvl { color: var(--red); }
+
+    /* Message keyword highlights */
+    .kw-alerte  { color: var(--red);    font-weight: 700; }
+    .kw-detect  { color: var(--green);  font-weight: 700; }
+    .kw-ok      { color: var(--green); }
+    .kw-admin   { color: var(--cyan); }
+    .kw-err     { color: var(--red); }
+    .kw-watch   { color: var(--cyan); }
+    .kw-hash    { color: var(--yellow); font-size: 11px; }
+
+    /* ── Empty state ─────────────────────────────────────────── */
+    #empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+    #empty-state .icon { font-size: 40px; opacity: .4; }
+    #empty-state p { font-size: 14px; }
+
+    /* ── Toast notification ──────────────────────────────────── */
+    #toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 999;
+    }
+    .toast {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      min-width: 300px;
+      max-width: 420px;
+      padding: 14px 16px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 8px 32px rgba(0,0,0,.5);
+      animation: slideIn .3s ease;
+      cursor: pointer;
+    }
+    .toast:hover { border-color: var(--cyan); }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: none; } }
+    @keyframes slideOut { to { opacity: 0; transform: translateX(20px); } }
+    .toast-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .toast-body { flex: 1; min-width: 0; }
+    .toast-title { font-size: 12px; font-weight: 700; margin-bottom: 3px; }
+    .toast-msg { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .toast.warn  { border-left: 3px solid var(--orange); }
+    .toast.error { border-left: 3px solid var(--red); }
+    .toast.info  { border-left: 3px solid var(--blue); }
+    .toast-close { color: var(--muted); font-size: 16px; flex-shrink: 0; line-height: 1; padding: 0 2px; cursor: pointer; }
+    .toast-close:hover { color: var(--text); }
+
+    /* ── Auto-scroll indicator ───────────────────────────────── */
+    #scroll-btn {
+      display: none;
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 8px 20px;
+      background: var(--cyan);
+      color: var(--bg);
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(34,211,238,.3);
+      z-index: 50;
+      animation: fadeIn .2s ease;
+    }
+
+    /* ── Responsive ──────────────────────────────────────────── */
+    @media (max-width: 700px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .log-entry { grid-template-columns: 1fr; }
+      .log-cell { border-right: none; padding: 4px 12px; }
+      .log-ts { font-size: 10px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ─────────────────────────────────────────────── -->
+<header>
+  <div class="header-icon">🛡️</div>
+  <div class="header-title">File System <span>Monitor</span></div>
+  <div id="status-pill">
+    <div class="dot"></div>
+    <span id="status-text">Connexion...</span>
+  </div>
+</header>
+
+<!-- ── Main ───────────────────────────────────────────────── -->
+<main>
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card total">
+      <div class="stat-label">Total</div>
+      <div class="stat-value" id="stat-total">0</div>
+    </div>
+    <div class="stat-card info">
+      <div class="stat-label">Info</div>
+      <div class="stat-value" id="stat-info">0</div>
+    </div>
+    <div class="stat-card warn">
+      <div class="stat-label">Warning</div>
+      <div class="stat-value" id="stat-warn">0</div>
+    </div>
+    <div class="stat-card error">
+      <div class="stat-label">Error</div>
+      <div class="stat-value" id="stat-error">0</div>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="filter-group">
+      <button class="btn active" id="btn-all"     onclick="setFilter('ALL')">Tous</button>
+      <button class="btn info"   id="btn-info"    onclick="setFilter('INFO')">INFO</button>
+      <button class="btn warn"   id="btn-warning" onclick="setFilter('WARNING')">WARNING</button>
+      <button class="btn error"  id="btn-error"   onclick="setFilter('ERROR')">ERROR</button>
+    </div>
+    <div class="search-wrap">
+      <input class="search-input" id="search" type="text" placeholder="Rechercher dans les logs..." oninput="applyFilters()" />
+    </div>
+    <button class="btn btn-icon" id="autoscroll-btn" onclick="toggleAutoScroll()" title="Auto-scroll">⬇ Auto</button>
+    <button class="btn btn-icon" onclick="clearDisplay()" title="Vider l'affichage">🗑</button>
+  </div>
+
+  <!-- Log panel -->
+  <div class="log-panel">
+    <div class="log-panel-header">
+      <span><span id="log-count">0</span> entrées affichées</span>
+      <span id="last-update" style="color:var(--muted);font-size:11px;">—</span>
+    </div>
+    <div id="log-list">
+      <div id="empty-state">
+        <div class="icon">📋</div>
+        <p>Aucun log pour le moment. En attente d'événements...</p>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ── Toast container ────────────────────────────────────── -->
+<div id="toast-container"></div>
+
+<!-- ── Auto-scroll button ─────────────────────────────────── -->
+<button id="scroll-btn" onclick="scrollToBottom()">↓ Nouveaux logs</button>
+
+<script>
+/* ─────────────────────────────────────────────────────────────
+   State
+   ───────────────────────────────────────────────────────────── */
+let allLogs        = [];
+let activeFilter   = 'ALL';
+let autoScroll     = true;
+let userScrolled   = false;
+let newWhileAway   = 0;
+
+const logList      = document.getElementById('log-list');
+const emptyState   = document.getElementById('empty-state');
+const logCount     = document.getElementById('log-count');
+const lastUpdate   = document.getElementById('last-update');
+const scrollBtn    = document.getElementById('scroll-btn');
+const autoscrollBtn = document.getElementById('autoscroll-btn');
+
+/* ─────────────────────────────────────────────────────────────
+   Keyword highlighting
+   ───────────────────────────────────────────────────────────── */
+function highlight(msg) {
+  // Escape HTML first
+  msg = msg.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  const rules = [
+    [/(\[ALERTE\])/g,    '<span class="kw-alerte">$1</span>'],
+    [/(\[DÉTECTION\])/g, '<span class="kw-detect">$1</span>'],
+    [/(\[DETECTION\])/g, '<span class="kw-detect">$1</span>'],
+    [/(\[ERREUR\])/g,    '<span class="kw-err">$1</span>'],
+    [/(\[ADMIN\])/g,     '<span class="kw-admin">$1</span>'],
+    [/(\[WATCH\])/g,     '<span class="kw-watch">$1</span>'],
+    [/(\[INFO\])/g,      '<span class="kw-admin">$1</span>'],
+    [/(\[\+\])/g,        '<span class="kw-ok">$1</span>'],
+    [/(\[-\])/g,         '<span class="kw-err">$1</span>'],
+    // SHA256 hash
+    [/([a-f0-9]{64})/gi, '<span class="kw-hash">$1</span>'],
+  ];
+  for (const [re, rep] of rules) msg = msg.replace(re, rep);
+  return msg;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Build a log entry DOM element
+   ───────────────────────────────────────────────────────────── */
+function buildEntry(log, isNew = false) {
+  const div = document.createElement('div');
+  div.className = `log-entry level-${log.level}${isNew ? ' new' : ''}`;
+  div.dataset.level = log.level;
+  div.dataset.raw   = (log.raw || '').toLowerCase();
+
+  div.innerHTML = `
+    <div class="log-cell log-ts">${log.timestamp || '—'}</div>
+    <div class="log-cell log-lvl">${log.level}</div>
+    <div class="log-cell log-msg">${highlight(log.message)}</div>
+  `;
+  return div;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Render all logs (initial load or filter change)
+   ───────────────────────────────────────────────────────────── */
+function renderAll() {
+  const search = document.getElementById('search').value.toLowerCase();
+
+  // Remove all log entries (keep empty-state node)
+  const entries = logList.querySelectorAll('.log-entry');
+  entries.forEach(e => e.remove());
+
+  const filtered = allLogs.filter(l => {
+    const levelOk  = activeFilter === 'ALL' || l.level === activeFilter;
+    const searchOk = !search || (l.raw || '').toLowerCase().includes(search);
+    return levelOk && searchOk;
+  });
+
+  if (filtered.length === 0) {
+    emptyState.style.display = 'flex';
+  } else {
+    emptyState.style.display = 'none';
+    const frag = document.createDocumentFragment();
+    filtered.forEach(l => frag.appendChild(buildEntry(l)));
+    logList.appendChild(frag);
+  }
+
+  logCount.textContent = filtered.length;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Add a single new log entry (SSE push)
+   ───────────────────────────────────────────────────────────── */
+function appendEntry(log) {
+  allLogs.push(log);
+  updateStats(log.level, '+');
+
+  const search = document.getElementById('search').value.toLowerCase();
+  const levelOk  = activeFilter === 'ALL' || log.level === activeFilter;
+  const searchOk = !search || (log.raw || '').toLowerCase().includes(search);
+
+  if (levelOk && searchOk) {
+    emptyState.style.display = 'none';
+    const entry = buildEntry(log, true);
+    logList.appendChild(entry);
+    logCount.textContent = parseInt(logCount.textContent) + 1;
+  }
+
+  // Update last-update time
+  lastUpdate.textContent = 'Mis à jour ' + new Date().toLocaleTimeString('fr-FR');
+
+  // Auto-scroll or show button
+  if (autoScroll && !userScrolled) {
+    scrollToBottom();
+  } else {
+    newWhileAway++;
+    scrollBtn.style.display = 'block';
+    scrollBtn.textContent = `↓ ${newWhileAway} nouveau${newWhileAway > 1 ? 'x' : ''} log${newWhileAway > 1 ? 's' : ''}`;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Stats
+   ───────────────────────────────────────────────────────────── */
+const statEls = {
+  TOTAL:   document.getElementById('stat-total'),
+  INFO:    document.getElementById('stat-info'),
+  WARNING: document.getElementById('stat-warn'),
+  ERROR:   document.getElementById('stat-error'),
+};
+
+function setStats(counts) {
+  statEls.TOTAL.textContent   = counts.TOTAL   || 0;
+  statEls.INFO.textContent    = counts.INFO    || 0;
+  statEls.WARNING.textContent = counts.WARNING || 0;
+  statEls.ERROR.textContent   = counts.ERROR   || 0;
+}
+
+function updateStats(level, op) {
+  const inc = op === '+' ? 1 : -1;
+  statEls.TOTAL.textContent   = Math.max(0, parseInt(statEls.TOTAL.textContent)   + inc);
+  if (level === 'INFO')    statEls.INFO.textContent    = Math.max(0, parseInt(statEls.INFO.textContent)    + inc);
+  if (level === 'WARNING') statEls.WARNING.textContent = Math.max(0, parseInt(statEls.WARNING.textContent) + inc);
+  if (level === 'ERROR')   statEls.ERROR.textContent   = Math.max(0, parseInt(statEls.ERROR.textContent)   + inc);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Filters
+   ───────────────────────────────────────────────────────────── */
+function setFilter(level) {
+  activeFilter = level;
+  document.querySelectorAll('.filter-group .btn').forEach(b => b.classList.remove('active'));
+  const map = { ALL: 'btn-all', INFO: 'btn-info', WARNING: 'btn-warning', ERROR: 'btn-error' };
+  document.getElementById(map[level]).classList.add('active');
+  renderAll();
+}
+
+function applyFilters() { renderAll(); }
+
+/* ─────────────────────────────────────────────────────────────
+   Auto-scroll
+   ───────────────────────────────────────────────────────────── */
+function scrollToBottom() {
+  logList.scrollTop = logList.scrollHeight;
+  userScrolled = false;
+  newWhileAway = 0;
+  scrollBtn.style.display = 'none';
+}
+
+function toggleAutoScroll() {
+  autoScroll = !autoScroll;
+  autoscrollBtn.classList.toggle('active', autoScroll);
+  autoscrollBtn.textContent = autoScroll ? '⬇ Auto' : '⬇ Auto';
+  if (autoScroll) scrollToBottom();
+}
+
+logList.addEventListener('scroll', () => {
+  const atBottom = logList.scrollHeight - logList.scrollTop <= logList.clientHeight + 20;
+  if (!atBottom) {
+    userScrolled = true;
+  } else {
+    userScrolled = false;
+    newWhileAway = 0;
+    scrollBtn.style.display = 'none';
+  }
+});
+
+/* ─────────────────────────────────────────────────────────────
+   Clear display
+   ───────────────────────────────────────────────────────────── */
+function clearDisplay() {
+  allLogs = [];
+  renderAll();
+  setStats({ TOTAL: 0, INFO: 0, WARNING: 0, ERROR: 0 });
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Toast notifications
+   ───────────────────────────────────────────────────────────── */
+function showToast(log) {
+  const level = log.level;
+  // Only toast on WARNING and ERROR (not spam INFO)
+  if (level === 'INFO' && !log.message.includes('[DÉTECTION]') && !log.message.includes('[DETECTION]')) return;
+
+  const icons = { INFO: 'ℹ️', WARNING: '⚠️', ERROR: '🚨' };
+  const cls   = { INFO: 'info', WARNING: 'warn', ERROR: 'error' };
+
+  const toast = document.createElement('div');
+  toast.className = `toast ${cls[level] || 'info'}`;
+  toast.innerHTML = `
+    <div class="toast-icon">${icons[level] || 'ℹ️'}</div>
+    <div class="toast-body">
+      <div class="toast-title">${level} — ${log.timestamp || ''}</div>
+      <div class="toast-msg">${log.message}</div>
+    </div>
+    <div class="toast-close" onclick="this.parentElement.remove()">✕</div>
+  `;
+
+  const container = document.getElementById('toast-container');
+  container.appendChild(toast);
+
+  // Scroll to matching entry on click
+  toast.addEventListener('click', (e) => {
+    if (e.target.classList.contains('toast-close')) return;
+    toast.remove();
+    // Switch to correct filter and highlight
+    setFilter('ALL');
+    scrollToBottom();
+  });
+
+  // Auto-dismiss after 6s
+  setTimeout(() => {
+    if (!toast.isConnected) return;
+    toast.style.animation = 'slideOut .3s ease forwards';
+    setTimeout(() => toast.remove(), 300);
+  }, 6000);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Initial load
+   ───────────────────────────────────────────────────────────── */
+async function loadHistory() {
+  try {
+    const [logsRes, statsRes] = await Promise.all([
+      fetch('/api/logs'),
+      fetch('/api/stats'),
+    ]);
+    const logs  = await logsRes.json();
+    const stats = await statsRes.json();
+
+    allLogs = logs;
+    setStats(stats);
+    renderAll();
+    if (logs.length > 0) scrollToBottom();
+    lastUpdate.textContent = 'Chargé à ' + new Date().toLocaleTimeString('fr-FR');
+  } catch (err) {
+    console.error('Erreur chargement logs:', err);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SSE — connexion temps réel
+   ───────────────────────────────────────────────────────────── */
+const statusPill = document.getElementById('status-pill');
+const statusText = document.getElementById('status-text');
+
+function setStatus(connected) {
+  statusPill.className = connected ? 'connected' : 'disconnected';
+  statusText.textContent = connected ? 'Connecté' : 'Déconnecté';
+}
+
+function connectSSE() {
+  const es = new EventSource('/api/stream');
+
+  es.onopen = () => setStatus(true);
+
+  es.onmessage = (e) => {
+    try {
+      const log = JSON.parse(e.data);
+      appendEntry(log);
+      showToast(log);
+    } catch (_) {}
+  };
+
+  es.onerror = () => {
+    setStatus(false);
+    es.close();
+    // Reconnect after 3s
+    setTimeout(connectSSE, 3000);
+  };
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Init
+   ───────────────────────────────────────────────────────────── */
+autoscrollBtn.classList.add('active');
+loadHistory().then(() => connectSSE());
+</script>
+
+</body>
+</html>
