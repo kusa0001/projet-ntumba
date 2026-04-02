@@ -42,8 +42,51 @@ def parse_log_line(line: str) -> dict | None:
             "message": message.strip(),
             "raw": line,
         }
-    # Ligne non standard : on la garde telle quelle
     return {"timestamp": "", "level": "INFO", "message": line, "raw": line}
+
+
+def _is_detail_line(msg: str) -> bool:
+    """Une ligne de détail est une sous-ligne d'alerte (commence par ' - ')."""
+    return msg.startswith(" - ") or msg.startswith("  - ")
+
+
+def group_logs(parsed_lines: list) -> list:
+    """
+    Regroupe les lignes [ALERTE] avec leurs lignes de détail suivantes.
+    Les entrées groupées ont un champ 'details' (liste de strings).
+    Les lignes de détail orphelines sont ignorées (déjà consommées).
+    """
+    groups = []
+    i = 0
+    while i < len(parsed_lines):
+        line = parsed_lines[i]
+        msg = line.get("message", "")
+
+        if "[ALERTE]" in msg:
+            details = []
+            j = i + 1
+            while j < len(parsed_lines):
+                next_msg = parsed_lines[j].get("message", "")
+                if _is_detail_line(next_msg):
+                    details.append(next_msg.strip())
+                    j += 1
+                else:
+                    break
+            entry = dict(line)
+            if details:
+                entry["details"] = details
+            groups.append(entry)
+            i = j
+
+        elif _is_detail_line(msg):
+            # Ligne déjà consommée par un groupe précédent — ignorer
+            i += 1
+
+        else:
+            groups.append(line)
+            i += 1
+
+    return groups
 
 
 def _broadcast(data: str) -> None:
@@ -61,8 +104,8 @@ def _broadcast(data: str) -> None:
 
 def tail_log() -> None:
     """
-    Thread daemon qui surveille monitor.log et pousse les nouvelles lignes
-    vers tous les clients SSE via leurs queues.
+    Thread daemon qui surveille monitor.log, groupe les lignes [ALERTE]
+    avec leurs détails, puis pousse vers tous les clients SSE.
     """
     last_size = 0
 
@@ -76,14 +119,27 @@ def tail_log() -> None:
                         new_lines = f.readlines()
                     last_size = current_size
 
-                    for line in new_lines:
-                        parsed = parse_log_line(line)
-                        if parsed:
-                            _broadcast(json.dumps(parsed))
+                    parsed = [p for line in new_lines if (p := parse_log_line(line))]
+
+                    # Si un [ALERTE] est détecté, attendre un peu pour que
+                    # les lignes de détail suivantes soient écrites
+                    has_alert = any("[ALERTE]" in p.get("message", "") for p in parsed)
+                    if has_alert:
+                        time.sleep(0.2)
+                        current_size2 = os.path.getsize(LOG_FILE)
+                        if current_size2 > last_size:
+                            with open(LOG_FILE, "r", encoding="utf-8", errors="replace") as f:
+                                f.seek(last_size)
+                                more = f.readlines()
+                            last_size = current_size2
+                            parsed += [p for line in more if (p := parse_log_line(line))]
+
+                    for entry in group_logs(parsed):
+                        _broadcast(json.dumps(entry))
 
                 elif current_size < last_size:
-                    # Fichier tronqué / rotation
                     last_size = 0
+
         except Exception:
             pass
 
@@ -97,22 +153,37 @@ def index():
 
 @app.route("/api/logs")
 def get_logs():
-    """Retourne tout l'historique du fichier log en JSON."""
-    logs = []
+    """Retourne tout l'historique du fichier log, groupé, en JSON."""
+    raw = []
     if os.path.exists(LOG_FILE):
         with open(LOG_FILE, "r", encoding="utf-8", errors="replace") as f:
             for line in f:
                 parsed = parse_log_line(line)
                 if parsed:
-                    logs.append(parsed)
-    return jsonify(logs)
+                    raw.append(parsed)
+    return jsonify(group_logs(raw))
+
+
+@app.route("/api/stats")
+def get_stats():
+    """Retourne les compteurs par niveau (les lignes de détail ne comptent pas)."""
+    counts = {"INFO": 0, "WARNING": 0, "ERROR": 0, "TOTAL": 0}
+    if os.path.exists(LOG_FILE):
+        with open(LOG_FILE, "r", encoding="utf-8", errors="replace") as f:
+            for line in f:
+                parsed = parse_log_line(line)
+                if parsed and not _is_detail_line(parsed["message"]):
+                    counts["TOTAL"] += 1
+                    lvl = parsed["level"]
+                    if lvl in counts:
+                        counts[lvl] += 1
+    return jsonify(counts)
 
 
 @app.route("/api/stream")
 def stream():
     """
-    Endpoint SSE : envoie les nouvelles lignes de log en temps réel.
-    Le client s'abonne et reçoit chaque événement sous forme de JSON.
+    Endpoint SSE : envoie les nouvelles entrées groupées en temps réel.
     """
     q: queue.Queue = queue.Queue(maxsize=200)
     with _subscribers_lock:
@@ -125,7 +196,6 @@ def stream():
                     data = q.get(timeout=25)
                     yield f"data: {data}\n\n"
                 except queue.Empty:
-                    # Heartbeat pour maintenir la connexion ouverte
                     yield ": heartbeat\n\n"
         except GeneratorExit:
             with _subscribers_lock:
@@ -143,24 +213,7 @@ def stream():
     )
 
 
-@app.route("/api/stats")
-def get_stats():
-    """Retourne les compteurs par niveau pour les cartes de stats."""
-    counts = {"INFO": 0, "WARNING": 0, "ERROR": 0, "TOTAL": 0}
-    if os.path.exists(LOG_FILE):
-        with open(LOG_FILE, "r", encoding="utf-8", errors="replace") as f:
-            for line in f:
-                parsed = parse_log_line(line)
-                if parsed:
-                    counts["TOTAL"] += 1
-                    lvl = parsed["level"]
-                    if lvl in counts:
-                        counts[lvl] += 1
-    return jsonify(counts)
-
-
 if __name__ == "__main__":
-    # Démarrer le thread de surveillance du fichier log
     watcher = threading.Thread(target=tail_log, daemon=True)
     watcher.start()
 

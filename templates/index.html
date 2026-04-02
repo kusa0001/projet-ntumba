@@ -33,7 +33,6 @@
       flex-direction: column;
       min-height: 100vh;
     }
-    /* scrollbar */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: var(--bg); }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
@@ -49,149 +48,80 @@
       position: sticky; top: 0; z-index: 100;
     }
     .header-icon { font-size: 22px; }
-    .header-title {
-      font-size: 18px;
-      font-weight: 700;
-      letter-spacing: -.3px;
-      flex: 1;
-    }
+    .header-title { font-size: 18px; font-weight: 700; letter-spacing: -.3px; flex: 1; }
     .header-title span { color: var(--cyan); }
 
     /* ── Status pill ────────────────────────────────────────── */
     #status-pill {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      padding: 5px 13px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: .3px;
-      background: #16213a;
-      border: 1px solid var(--border);
-      transition: all .3s;
+      display: flex; align-items: center; gap: 7px;
+      padding: 5px 13px; border-radius: 20px;
+      font-size: 12px; font-weight: 600; letter-spacing: .3px;
+      background: #16213a; border: 1px solid var(--border); transition: all .3s;
     }
-    .dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: var(--muted);
-      transition: background .3s;
-    }
-    #status-pill.connected { border-color: var(--green); color: var(--green); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); transition: background .3s; }
+    #status-pill.connected  { border-color: var(--green); color: var(--green); }
     #status-pill.connected .dot { background: var(--green); animation: pulse 1.8s infinite; }
     #status-pill.disconnected { border-color: var(--red); color: var(--red); }
     #status-pill.disconnected .dot { background: var(--red); }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; } 50% { opacity: .35; }
-    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
 
-    /* ── Main layout ─────────────────────────────────────────── */
+    /* ── Main ────────────────────────────────────────────────── */
     main { flex: 1; padding: 24px 28px; display: flex; flex-direction: column; gap: 20px; max-width: 1400px; width: 100%; margin: 0 auto; }
 
     /* ── Stats cards ─────────────────────────────────────────── */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-    }
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
     .stat-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      transition: border-color .2s;
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 16px 20px; display: flex; flex-direction: column; gap: 4px; transition: border-color .2s;
     }
     .stat-card:hover { border-color: var(--cyan); }
     .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
     .stat-value { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
-    .stat-card.total  .stat-value { color: var(--cyan); }
-    .stat-card.info   .stat-value { color: var(--blue); }
-    .stat-card.warn   .stat-value { color: var(--orange); }
-    .stat-card.error  .stat-value { color: var(--red); }
+    .stat-card.total .stat-value { color: var(--cyan); }
+    .stat-card.info  .stat-value { color: var(--blue); }
+    .stat-card.warn  .stat-value { color: var(--orange); }
+    .stat-card.error .stat-value { color: var(--red); }
 
     /* ── Toolbar ─────────────────────────────────────────────── */
-    .toolbar {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
+    .toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .filter-group { display: flex; gap: 6px; }
     .btn {
-      padding: 7px 16px;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      letter-spacing: .4px;
-      transition: all .15s;
+      padding: 7px 16px; border-radius: 6px; border: 1px solid var(--border);
+      background: var(--surface); color: var(--muted);
+      font-size: 12px; font-weight: 600; cursor: pointer; letter-spacing: .4px; transition: all .15s;
     }
     .btn:hover { border-color: var(--cyan); color: var(--text); }
-    .btn.active { background: var(--cyan); border-color: var(--cyan); color: var(--bg); }
-    .btn.active.warn  { background: var(--orange); border-color: var(--orange); }
-    .btn.active.error { background: var(--red); border-color: var(--red); }
-    .btn.active.info  { background: var(--blue); border-color: var(--blue); }
-
+    .btn.active       { background: var(--cyan);   border-color: var(--cyan);   color: var(--bg); }
+    .btn.active.warn  { background: var(--orange);  border-color: var(--orange); }
+    .btn.active.error { background: var(--red);     border-color: var(--red); }
+    .btn.active.info  { background: var(--blue);    border-color: var(--blue); }
+    .btn-icon { padding: 7px 12px; font-size: 14px; }
     .search-wrap { flex: 1; min-width: 160px; }
     .search-input {
-      width: 100%;
-      padding: 7px 12px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      color: var(--text);
-      font-size: 13px;
-      outline: none;
-      transition: border-color .15s;
+      width: 100%; padding: 7px 12px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 6px;
+      color: var(--text); font-size: 13px; outline: none; transition: border-color .15s;
     }
     .search-input::placeholder { color: var(--muted); }
     .search-input:focus { border-color: var(--cyan); }
 
-    .btn-icon {
-      padding: 7px 12px;
-      font-size: 14px;
-    }
-    .spacer { flex: 1; }
-
     /* ── Log panel ───────────────────────────────────────────── */
     .log-panel {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden; flex: 1; display: flex; flex-direction: column;
     }
     .log-panel-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 16px;
-      border-bottom: 1px solid var(--border);
-      font-size: 12px;
-      color: var(--muted);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 16px; border-bottom: 1px solid var(--border);
+      font-size: 12px; color: var(--muted);
     }
     #log-count { font-weight: 600; color: var(--text); }
-
-    #log-list {
-      flex: 1;
-      overflow-y: auto;
-      max-height: calc(100vh - 340px);
-      min-height: 300px;
-    }
+    #log-list { flex: 1; overflow-y: auto; max-height: calc(100vh - 340px); min-height: 300px; }
 
     /* ── Log entry ───────────────────────────────────────────── */
     .log-entry {
       display: grid;
-      grid-template-columns: 195px 80px 1fr;
-      gap: 0;
+      grid-template-columns: 195px 80px 1fr auto;
       border-bottom: 1px solid #151e30;
       font-size: 12.5px;
       font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
@@ -200,116 +130,158 @@
       transition: background .1s;
     }
     .log-entry:hover { background: var(--surface2); }
-    .log-entry.new { animation: flashIn .6s ease; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
-    @keyframes flashIn { 0% { background: #0e2a1f; } 100% { background: transparent; } }
-    @keyframes flashWarn { 0% { background: #2a1e0a; } 100% { background: transparent; } }
-    @keyframes flashErr  { 0% { background: #2a0e0e; } 100% { background: transparent; } }
+    .log-entry.has-details { cursor: pointer; }
+    .log-entry.has-details:hover { background: #16253a; }
+    .log-entry.new          { animation: flashIn .6s ease; }
     .log-entry.new.level-WARNING { animation: flashWarn .6s ease; }
-    .log-entry.new.level-ERROR   { animation: flashErr .6s ease; }
+    .log-entry.new.level-ERROR   { animation: flashErr  .6s ease; }
+    @keyframes fadeIn   { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+    @keyframes flashIn  { 0% { background: #0e2a1f; } 100% { background: transparent; } }
+    @keyframes flashWarn{ 0% { background: #2a1e0a; } 100% { background: transparent; } }
+    @keyframes flashErr { 0% { background: #2a0e0e; } 100% { background: transparent; } }
 
     .log-cell {
-      padding: 7px 12px;
-      border-right: 1px solid #151e30;
-      display: flex;
-      align-items: center;
+      padding: 7px 12px; border-right: 1px solid #151e30;
+      display: flex; align-items: center;
     }
     .log-cell:last-child { border-right: none; }
-
     .log-ts  { color: var(--muted); font-size: 11.5px; }
     .log-lvl { font-weight: 700; font-size: 11px; letter-spacing: .5px; justify-content: center; }
-    .log-msg { color: var(--text); word-break: break-all; }
+    .log-msg { color: var(--text); word-break: break-all; flex: 1; }
+    .log-expand { color: var(--muted); font-size: 11px; padding: 7px 10px; white-space: nowrap; }
+    .log-entry.has-details .log-expand { color: var(--orange); }
 
-    /* Level colors */
     .level-INFO    .log-lvl { color: var(--blue); }
     .level-WARNING .log-lvl { color: var(--orange); }
     .level-ERROR   .log-lvl { color: var(--red); }
 
     /* Message keyword highlights */
-    .kw-alerte  { color: var(--red);    font-weight: 700; }
-    .kw-detect  { color: var(--green);  font-weight: 700; }
-    .kw-ok      { color: var(--green); }
-    .kw-admin   { color: var(--cyan); }
-    .kw-err     { color: var(--red); }
-    .kw-watch   { color: var(--cyan); }
-    .kw-hash    { color: var(--yellow); font-size: 11px; }
+    .kw-alerte { color: var(--red);   font-weight: 700; }
+    .kw-detect { color: var(--green); font-weight: 700; }
+    .kw-ok     { color: var(--green); }
+    .kw-admin  { color: var(--cyan); }
+    .kw-err    { color: var(--red); }
+    .kw-watch  { color: var(--cyan); }
+    .kw-hash   { color: var(--yellow); font-size: 11px; }
 
     /* ── Empty state ─────────────────────────────────────────── */
     #empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      padding: 60px 20px;
-      color: var(--muted);
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 10px; padding: 60px 20px; color: var(--muted);
     }
     #empty-state .icon { font-size: 40px; opacity: .4; }
     #empty-state p { font-size: 14px; }
 
-    /* ── Toast notification ──────────────────────────────────── */
-    #toast-container {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      z-index: 999;
+    /* ── Modal ───────────────────────────────────────────────── */
+    #modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
+      z-index: 600;
+      align-items: center;
+      justify-content: center;
     }
-    .toast {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      min-width: 300px;
-      max-width: 420px;
-      padding: 14px 16px;
+    #modal-overlay.open { display: flex; }
+    #modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      width: min(540px, 92vw);
+      max-height: 80vh;
+      overflow: hidden;
+      display: flex; flex-direction: column;
+      box-shadow: 0 32px 80px rgba(0,0,0,.8);
+      animation: modalIn .2s ease;
+    }
+    @keyframes modalIn { from { opacity: 0; transform: scale(.96) translateY(8px); } to { opacity: 1; transform: none; } }
+    .modal-header {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid var(--border);
+      background: #0f1826;
+    }
+    .modal-icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+    .modal-title {
+      flex: 1;
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      font-size: 12.5px; font-weight: 600; line-height: 1.5;
+      color: var(--red); word-break: break-all;
+    }
+    .modal-ts {
+      font-size: 10.5px; color: var(--muted); margin-top: 4px;
+      font-family: 'Segoe UI', sans-serif; font-weight: 400;
+    }
+    .modal-close {
+      color: var(--muted); font-size: 18px; cursor: pointer;
+      flex-shrink: 0; padding: 0 2px; line-height: 1;
+    }
+    .modal-close:hover { color: var(--text); }
+
+    .modal-body { padding: 16px 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+
+    .modal-detail {
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      font-size: 11.5px; line-height: 1.7;
+      padding: 11px 14px;
       background: var(--surface2);
       border: 1px solid var(--border);
+      border-radius: 6px;
+      word-break: break-all;
+    }
+    .modal-detail.perm  { border-left: 3px solid var(--orange); }
+    .modal-detail.state { border-left: 3px solid #334155; }
+
+    .d-label { color: var(--muted); }
+    .d-old   { color: var(--orange); font-weight: 600; }
+    .d-new   { color: var(--green);  font-weight: 600; }
+    .d-arrow { color: var(--muted); margin: 0 6px; }
+
+    /* State dict key/value formatting */
+    .d-key   { color: var(--cyan); }
+    .d-val   { color: var(--yellow); }
+    .d-str   { color: var(--green); }
+
+    /* ── Toast notification ──────────────────────────────────── */
+    #toast-container {
+      position: fixed; bottom: 24px; right: 24px;
+      display: flex; flex-direction: column; gap: 10px; z-index: 999;
+    }
+    .toast {
+      display: flex; align-items: flex-start; gap: 12px;
+      min-width: 300px; max-width: 420px;
+      padding: 14px 16px;
+      background: var(--surface2); border: 1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: 0 8px 32px rgba(0,0,0,.5);
-      animation: slideIn .3s ease;
-      cursor: pointer;
+      animation: slideIn .3s ease; cursor: pointer;
     }
     .toast:hover { border-color: var(--cyan); }
-    @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: none; } }
-    @keyframes slideOut { to { opacity: 0; transform: translateX(20px); } }
-    .toast-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
-    .toast-body { flex: 1; min-width: 0; }
+    @keyframes slideIn  { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: none; } }
+    @keyframes slideOut { to   { opacity: 0; transform: translateX(20px); } }
+    .toast-icon  { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .toast-body  { flex: 1; min-width: 0; }
     .toast-title { font-size: 12px; font-weight: 700; margin-bottom: 3px; }
-    .toast-msg { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .toast-msg   { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .toast.warn  { border-left: 3px solid var(--orange); }
     .toast.error { border-left: 3px solid var(--red); }
     .toast.info  { border-left: 3px solid var(--blue); }
     .toast-close { color: var(--muted); font-size: 16px; flex-shrink: 0; line-height: 1; padding: 0 2px; cursor: pointer; }
     .toast-close:hover { color: var(--text); }
 
-    /* ── Auto-scroll indicator ───────────────────────────────── */
+    /* ── Scroll button ───────────────────────────────────────── */
     #scroll-btn {
-      display: none;
-      position: fixed;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 8px 20px;
-      background: var(--cyan);
-      color: var(--bg);
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 700;
-      border: none;
-      cursor: pointer;
-      box-shadow: 0 4px 20px rgba(34,211,238,.3);
-      z-index: 50;
-      animation: fadeIn .2s ease;
+      display: none; position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      padding: 8px 20px; background: var(--cyan); color: var(--bg);
+      border-radius: 20px; font-size: 12px; font-weight: 700; border: none; cursor: pointer;
+      box-shadow: 0 4px 20px rgba(34,211,238,.3); z-index: 50; animation: fadeIn .2s ease;
     }
 
-    /* ── Responsive ──────────────────────────────────────────── */
     @media (max-width: 700px) {
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
-      .log-entry { grid-template-columns: 1fr; }
-      .log-cell { border-right: none; padding: 4px 12px; }
-      .log-ts { font-size: 10px; }
+      .log-entry  { grid-template-columns: 1fr; }
+      .log-cell   { border-right: none; padding: 4px 12px; }
+      .log-ts     { font-size: 10px; }
     }
   </style>
 </head>
@@ -327,7 +299,6 @@
 
 <!-- ── Main ───────────────────────────────────────────────── -->
 <main>
-
   <!-- Stats -->
   <div class="stats-grid">
     <div class="stat-card total">
@@ -376,39 +347,55 @@
       </div>
     </div>
   </div>
-
 </main>
+
+<!-- ── Modal détails ──────────────────────────────────────── -->
+<div id="modal-overlay" onclick="handleOverlayClick(event)">
+  <div id="modal">
+    <div class="modal-header">
+      <div class="modal-icon">🚨</div>
+      <div style="flex:1;min-width:0">
+        <div class="modal-title" id="modal-title"></div>
+        <div class="modal-ts"   id="modal-ts"></div>
+      </div>
+      <div class="modal-close" onclick="closeModal()">✕</div>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
 
 <!-- ── Toast container ────────────────────────────────────── -->
 <div id="toast-container"></div>
 
-<!-- ── Auto-scroll button ─────────────────────────────────── -->
+<!-- ── Scroll button ──────────────────────────────────────── -->
 <button id="scroll-btn" onclick="scrollToBottom()">↓ Nouveaux logs</button>
 
 <script>
 /* ─────────────────────────────────────────────────────────────
    State
    ───────────────────────────────────────────────────────────── */
-let allLogs        = [];
-let activeFilter   = 'ALL';
-let autoScroll     = true;
-let userScrolled   = false;
-let newWhileAway   = 0;
+let allLogs      = [];
+let activeFilter = 'ALL';
+let autoScroll   = true;
+let userScrolled = false;
+let newWhileAway = 0;
 
-const logList      = document.getElementById('log-list');
-const emptyState   = document.getElementById('empty-state');
-const logCount     = document.getElementById('log-count');
-const lastUpdate   = document.getElementById('last-update');
-const scrollBtn    = document.getElementById('scroll-btn');
+const logList       = document.getElementById('log-list');
+const emptyState    = document.getElementById('empty-state');
+const logCount      = document.getElementById('log-count');
+const lastUpdate    = document.getElementById('last-update');
+const scrollBtn     = document.getElementById('scroll-btn');
 const autoscrollBtn = document.getElementById('autoscroll-btn');
 
 /* ─────────────────────────────────────────────────────────────
-   Keyword highlighting
+   Helpers
    ───────────────────────────────────────────────────────────── */
-function highlight(msg) {
-  // Escape HTML first
-  msg = msg.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
 
+function highlight(msg) {
+  msg = escHtml(msg);
   const rules = [
     [/(\[ALERTE\])/g,    '<span class="kw-alerte">$1</span>'],
     [/(\[DÉTECTION\])/g, '<span class="kw-detect">$1</span>'],
@@ -419,7 +406,6 @@ function highlight(msg) {
     [/(\[INFO\])/g,      '<span class="kw-admin">$1</span>'],
     [/(\[\+\])/g,        '<span class="kw-ok">$1</span>'],
     [/(\[-\])/g,         '<span class="kw-err">$1</span>'],
-    // SHA256 hash
     [/([a-f0-9]{64})/gi, '<span class="kw-hash">$1</span>'],
   ];
   for (const [re, rep] of rules) msg = msg.replace(re, rep);
@@ -427,11 +413,78 @@ function highlight(msg) {
 }
 
 /* ─────────────────────────────────────────────────────────────
+   Modal
+   ───────────────────────────────────────────────────────────── */
+function openModal(log) {
+  document.getElementById('modal-title').innerHTML = highlight(log.message);
+  document.getElementById('modal-ts').textContent  = log.timestamp || '';
+
+  const body = document.getElementById('modal-body');
+  body.innerHTML = '';
+
+  (log.details || []).forEach(detail => {
+    const div = document.createElement('div');
+
+    // Classement visuel de la ligne
+    const isPerm  = /permissions|propri/i.test(detail);
+    const isState = /état|etat|ancien|nouvel/i.test(detail);
+    div.className = `modal-detail${isPerm ? ' perm' : isState ? ' state' : ''}`;
+
+    // "Label : OLD -> NEW"
+    if (detail.includes(' -> ')) {
+      const colonIdx = detail.indexOf(' : ');
+      const label    = detail.substring(0, colonIdx);
+      const rest     = detail.substring(colonIdx + 3);
+      const arrowIdx = rest.indexOf(' -> ');
+      const oldVal   = rest.substring(0, arrowIdx);
+      const newVal   = rest.substring(arrowIdx + 4);
+      div.innerHTML  = `<span class="d-label">${escHtml(label)} : </span>`
+                     + `<span class="d-old">${escHtml(oldVal)}</span>`
+                     + `<span class="d-arrow">→</span>`
+                     + `<span class="d-new">${escHtml(newVal)}</span>`;
+
+    // "Label : {dict}"
+    } else if (detail.includes(' : ')) {
+      const colonIdx = detail.indexOf(' : ');
+      const label    = detail.substring(0, colonIdx);
+      const value    = detail.substring(colonIdx + 3);
+      // Colorize dict keys
+      const colorized = escHtml(value).replace(
+        /'([^']+)':\s*('([^']*)'|([^,}]+))/g,
+        (_, key, rawVal, strVal) =>
+          strVal !== undefined
+            ? `<span class="d-key">'${key}'</span>: <span class="d-str">'${escHtml(strVal)}'</span>`
+            : `<span class="d-key">'${key}'</span>: <span class="d-val">${rawVal}</span>`
+      );
+      div.innerHTML  = `<span class="d-label">${escHtml(label)} :</span><br>${colorized}`;
+
+    } else {
+      div.innerHTML = escHtml(detail);
+    }
+
+    body.appendChild(div);
+  });
+
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+/* ─────────────────────────────────────────────────────────────
    Build a log entry DOM element
    ───────────────────────────────────────────────────────────── */
 function buildEntry(log, isNew = false) {
+  const hasDetails = log.details && log.details.length > 0;
   const div = document.createElement('div');
-  div.className = `log-entry level-${log.level}${isNew ? ' new' : ''}`;
+  div.className = `log-entry level-${log.level}${isNew ? ' new' : ''}${hasDetails ? ' has-details' : ''}`;
   div.dataset.level = log.level;
   div.dataset.raw   = (log.raw || '').toLowerCase();
 
@@ -439,65 +492,64 @@ function buildEntry(log, isNew = false) {
     <div class="log-cell log-ts">${log.timestamp || '—'}</div>
     <div class="log-cell log-lvl">${log.level}</div>
     <div class="log-cell log-msg">${highlight(log.message)}</div>
+    <div class="log-cell log-expand">${hasDetails ? '▶ détails' : ''}</div>
   `;
+
+  if (hasDetails) {
+    div.addEventListener('click', () => openModal(log));
+  }
+
   return div;
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Render all logs (initial load or filter change)
+   Render all logs
    ───────────────────────────────────────────────────────────── */
 function renderAll() {
   const search = document.getElementById('search').value.toLowerCase();
-
-  // Remove all log entries (keep empty-state node)
-  const entries = logList.querySelectorAll('.log-entry');
-  entries.forEach(e => e.remove());
+  logList.querySelectorAll('.log-entry').forEach(e => e.remove());
 
   const filtered = allLogs.filter(l => {
     const levelOk  = activeFilter === 'ALL' || l.level === activeFilter;
-    const searchOk = !search || (l.raw || '').toLowerCase().includes(search);
+    const searchOk = !search || (l.raw || '').toLowerCase().includes(search)
+                              || (l.details || []).join(' ').toLowerCase().includes(search);
     return levelOk && searchOk;
   });
 
-  if (filtered.length === 0) {
-    emptyState.style.display = 'flex';
-  } else {
-    emptyState.style.display = 'none';
-    const frag = document.createDocumentFragment();
-    filtered.forEach(l => frag.appendChild(buildEntry(l)));
-    logList.appendChild(frag);
-  }
+  emptyState.style.display = filtered.length === 0 ? 'flex' : 'none';
+
+  const frag = document.createDocumentFragment();
+  filtered.forEach(l => frag.appendChild(buildEntry(l)));
+  logList.appendChild(frag);
 
   logCount.textContent = filtered.length;
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Add a single new log entry (SSE push)
+   Append single entry (SSE push)
    ───────────────────────────────────────────────────────────── */
 function appendEntry(log) {
   allLogs.push(log);
   updateStats(log.level, '+');
 
-  const search = document.getElementById('search').value.toLowerCase();
+  const search   = document.getElementById('search').value.toLowerCase();
   const levelOk  = activeFilter === 'ALL' || log.level === activeFilter;
-  const searchOk = !search || (log.raw || '').toLowerCase().includes(search);
+  const searchOk = !search || (log.raw || '').toLowerCase().includes(search)
+                            || (log.details || []).join(' ').toLowerCase().includes(search);
 
   if (levelOk && searchOk) {
     emptyState.style.display = 'none';
-    const entry = buildEntry(log, true);
-    logList.appendChild(entry);
+    logList.appendChild(buildEntry(log, true));
     logCount.textContent = parseInt(logCount.textContent) + 1;
   }
 
-  // Update last-update time
   lastUpdate.textContent = 'Mis à jour ' + new Date().toLocaleTimeString('fr-FR');
 
-  // Auto-scroll or show button
   if (autoScroll && !userScrolled) {
     scrollToBottom();
   } else {
     newWhileAway++;
-    scrollBtn.style.display = 'block';
+    scrollBtn.style.display  = 'block';
     scrollBtn.textContent = `↓ ${newWhileAway} nouveau${newWhileAway > 1 ? 'x' : ''} log${newWhileAway > 1 ? 's' : ''}`;
   }
 }
@@ -521,7 +573,7 @@ function setStats(counts) {
 
 function updateStats(level, op) {
   const inc = op === '+' ? 1 : -1;
-  statEls.TOTAL.textContent   = Math.max(0, parseInt(statEls.TOTAL.textContent)   + inc);
+  statEls.TOTAL.textContent = Math.max(0, parseInt(statEls.TOTAL.textContent) + inc);
   if (level === 'INFO')    statEls.INFO.textContent    = Math.max(0, parseInt(statEls.INFO.textContent)    + inc);
   if (level === 'WARNING') statEls.WARNING.textContent = Math.max(0, parseInt(statEls.WARNING.textContent) + inc);
   if (level === 'ERROR')   statEls.ERROR.textContent   = Math.max(0, parseInt(statEls.ERROR.textContent)   + inc);
@@ -553,7 +605,6 @@ function scrollToBottom() {
 function toggleAutoScroll() {
   autoScroll = !autoScroll;
   autoscrollBtn.classList.toggle('active', autoScroll);
-  autoscrollBtn.textContent = autoScroll ? '⬇ Auto' : '⬇ Auto';
   if (autoScroll) scrollToBottom();
 }
 
@@ -569,7 +620,7 @@ logList.addEventListener('scroll', () => {
 });
 
 /* ─────────────────────────────────────────────────────────────
-   Clear display
+   Clear
    ───────────────────────────────────────────────────────────── */
 function clearDisplay() {
   allLogs = [];
@@ -582,7 +633,6 @@ function clearDisplay() {
    ───────────────────────────────────────────────────────────── */
 function showToast(log) {
   const level = log.level;
-  // Only toast on WARNING and ERROR (not spam INFO)
   if (level === 'INFO' && !log.message.includes('[DÉTECTION]') && !log.message.includes('[DETECTION]')) return;
 
   const icons = { INFO: 'ℹ️', WARNING: '⚠️', ERROR: '🚨' };
@@ -593,25 +643,25 @@ function showToast(log) {
   toast.innerHTML = `
     <div class="toast-icon">${icons[level] || 'ℹ️'}</div>
     <div class="toast-body">
-      <div class="toast-title">${level} — ${log.timestamp || ''}</div>
-      <div class="toast-msg">${log.message}</div>
+      <div class="toast-title">${escHtml(level)} — ${escHtml(log.timestamp || '')}</div>
+      <div class="toast-msg">${escHtml(log.message)}</div>
     </div>
-    <div class="toast-close" onclick="this.parentElement.remove()">✕</div>
+    <div class="toast-close" onclick="event.stopPropagation();this.parentElement.remove()">✕</div>
   `;
 
-  const container = document.getElementById('toast-container');
-  container.appendChild(toast);
+  document.getElementById('toast-container').appendChild(toast);
 
-  // Scroll to matching entry on click
   toast.addEventListener('click', (e) => {
     if (e.target.classList.contains('toast-close')) return;
     toast.remove();
-    // Switch to correct filter and highlight
-    setFilter('ALL');
-    scrollToBottom();
+    if (log.details && log.details.length > 0) {
+      openModal(log);
+    } else {
+      setFilter('ALL');
+      scrollToBottom();
+    }
   });
 
-  // Auto-dismiss after 6s
   setTimeout(() => {
     if (!toast.isConnected) return;
     toast.style.animation = 'slideOut .3s ease forwards';
@@ -624,13 +674,9 @@ function showToast(log) {
    ───────────────────────────────────────────────────────────── */
 async function loadHistory() {
   try {
-    const [logsRes, statsRes] = await Promise.all([
-      fetch('/api/logs'),
-      fetch('/api/stats'),
-    ]);
+    const [logsRes, statsRes] = await Promise.all([fetch('/api/logs'), fetch('/api/stats')]);
     const logs  = await logsRes.json();
     const stats = await statsRes.json();
-
     allLogs = logs;
     setStats(stats);
     renderAll();
@@ -642,7 +688,7 @@ async function loadHistory() {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SSE — connexion temps réel
+   SSE
    ───────────────────────────────────────────────────────────── */
 const statusPill = document.getElementById('status-pill');
 const statusText = document.getElementById('status-text');
@@ -654,9 +700,7 @@ function setStatus(connected) {
 
 function connectSSE() {
   const es = new EventSource('/api/stream');
-
   es.onopen = () => setStatus(true);
-
   es.onmessage = (e) => {
     try {
       const log = JSON.parse(e.data);
@@ -664,11 +708,9 @@ function connectSSE() {
       showToast(log);
     } catch (_) {}
   };
-
   es.onerror = () => {
     setStatus(false);
     es.close();
-    // Reconnect after 3s
     setTimeout(connectSSE, 3000);
   };
 }
