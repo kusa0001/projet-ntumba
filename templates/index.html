@@ -401,7 +401,7 @@
       </div>
       <div class="form-group">
         <label class="form-label">URL du panel (lien dans le message Discord)</label>
-        <input class="form-input" id="discord-panel-url" type="text" placeholder="http://IP_DU_SERVEUR:5000" />
+        <input class="form-input" id="discord-panel-url" type="text" placeholder="http://192.168.1.68:5000" />
         <span class="form-hint">L'URL que vos collègues utiliseront pour accéder au panel</span>
       </div>
     </div>
@@ -427,6 +427,12 @@ function parseOctalDigit(n) {
   if (n & 2) parts.push('Écriture');
   if (n & 1) parts.push('Exécution');
   return parts.length ? parts.join(' + ') : 'Aucun accès';
+}
+
+function describeOctalMode(octalStr) {
+  const p = formatOctalMode(octalStr);
+  if (typeof p === 'string') return String(octalStr);
+  return `${p.raw} (propriétaire : ${p.owner}; groupe : ${p.group}; autres : ${p.others})`;
 }
 
 function formatOctalMode(octalStr) {
@@ -470,6 +476,11 @@ function renderPermBlock(octalStr) {
 
 function formatUid(uid) {
   return String(uid) === '0' ? `0 (root)` : String(uid);
+}
+
+function translateStateValue(key, value) {
+  if (key === 'mode') return escHtml(describeOctalMode(value));
+  return /^0[oO]\d+$/.test(String(value)) ? escHtml(describeOctalMode(value)) : escHtml(value);
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -539,8 +550,8 @@ function renderDetail(detail) {
       /'([^']+)':\s*('([^']*)'|([^,}]+))/g,
       (_, key, rawVal, strVal) =>
         strVal !== undefined
-          ? `<span class="d-key">'${key}'</span>: <span class="d-str">'${escHtml(strVal)}'</span>`
-          : `<span class="d-key">'${key}'</span>: <span class="d-val">${rawVal}</span>`
+          ? `<span class="d-key">'${key}'</span>: <span class="d-str">'${translateStateValue(key, strVal)}'</span>`
+          : `<span class="d-key">'${key}'</span>: <span class="d-val">${translateStateValue(key, rawVal)}</span>`
     );
     div.innerHTML = `<span class="d-label">${escHtml(label)}</span>${colorized}`;
     return div;
@@ -585,7 +596,7 @@ function handleAlertOverlay(e) { if (e.target === document.getElementById('alert
 async function openDiscordModal() {
   const cfg = await fetch('/api/discord-config').then(r => r.json()).catch(() => ({}));
   document.getElementById('discord-webhook').value    = cfg.webhook_url || '';
-  document.getElementById('discord-panel-url').value  = cfg.panel_url   || 'http://localhost:5000';
+  document.getElementById('discord-panel-url').value  = cfg.panel_url   || 'http://192.168.1.68:5000';
   document.getElementById('discord-overlay').classList.add('open');
 }
 function closeDiscordModal() { document.getElementById('discord-overlay').classList.remove('open'); }
@@ -607,13 +618,13 @@ async function testDiscord() {
   if (!webhookUrl) { showSimpleToast('⚠ Entrez d\'abord une URL de webhook', 'warn'); return; }
   await fetch('/api/discord-config', {
     method: 'POST',
-    body: JSON.stringify({ webhook_url: webhookUrl, panel_url: panelUrl || 'http://localhost:5000' }),
+    body: JSON.stringify({ webhook_url: webhookUrl, panel_url: panelUrl || 'http://192.168.1.68:5000' }),
     headers: {'Content-Type': 'application/json'}
   });
   const payload = {
     embeds: [{
       title: '🧪 Test de notification — Surveillance Fichiers',
-      description: `Le panel de surveillance est opérationnel.\n\n🔗 **[Accéder au panel](${panelUrl || 'http://localhost:5000'})**`,
+      description: `Le panel de surveillance est opérationnel.\n\n🔗 **[Accéder au panel](${panelUrl || 'http://192.168.1.68:5000'})**`,
       color: 0x16a34a,
       footer: { text: 'File System Monitor — Test' },
     }]

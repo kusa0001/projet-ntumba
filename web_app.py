@@ -6,6 +6,7 @@ Utilise Flask + Server-Sent Events (SSE) pour les notifications live.
 
 import os
 import json
+import ast
 import time
 import queue
 import threading
@@ -18,6 +19,7 @@ app = Flask(__name__)
 
 LOG_FILE          = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs", "monitor.log")
 DISCORD_CFG_FILE  = os.path.join(os.path.dirname(os.path.abspath(__file__)), "discord_config.json")
+DEFAULT_PANEL_URL = "http://192.168.1.68:5000"
 
 # Liste des queues — une par client SSE connecté
 _subscribers: list[queue.Queue] = []
@@ -30,12 +32,12 @@ _tail_thread_started = False
 
 def load_discord_config() -> dict:
     if not os.path.exists(DISCORD_CFG_FILE):
-        return {"webhook_url": "", "panel_url": "http://localhost:5000"}
+        return {"webhook_url": "", "panel_url": DEFAULT_PANEL_URL}
     try:
         with open(DISCORD_CFG_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     except Exception:
-        return {"webhook_url": "", "panel_url": "http://localhost:5000"}
+        return {"webhook_url": "", "panel_url": DEFAULT_PANEL_URL}
 
 
 def save_discord_config(data: dict) -> None:
@@ -50,11 +52,87 @@ def _truncate_discord_text(text: str, limit: int) -> str:
     return text[: max(0, limit - 3)].rstrip() + "..."
 
 
+def _describe_octal_mode(mode: str) -> str:
+    """Traduit un mode octal Unix en description lisible en francais."""
+    raw = str(mode).strip()
+    digits = raw.replace("0o", "").replace("0O", "")
+    if not digits.isdigit() or len(digits) < 3:
+        return raw
+
+    rights_map = {
+        0: "aucun droit",
+        1: "execution uniquement",
+        2: "droit d'ecriture",
+        3: "droits d'ecriture et d'execution",
+        4: "droit de lecture",
+        5: "droits de lecture et d'execution",
+        6: "droits de lecture et d'ecriture",
+        7: "tous les droits standards : lecture, ecriture et execution",
+    }
+
+    perm_digits = digits[-3:]
+    owner = rights_map.get(int(perm_digits[0]), raw)
+    group = rights_map.get(int(perm_digits[1]), raw)
+    others = rights_map.get(int(perm_digits[2]), raw)
+
+    parts = [
+        f"proprietaire : {owner}",
+        f"groupe : {group}",
+        f"autres : {others}",
+    ]
+
+    if len(digits) == 4:
+        special = int(digits[0])
+        special_parts = []
+        if special & 4:
+            special_parts.append("setuid actif")
+        if special & 2:
+            special_parts.append("setgid actif")
+        if special & 1:
+            special_parts.append("sticky bit actif")
+        if special_parts:
+            parts.append(", ".join(special_parts))
+
+    return f"{raw} ({' ; '.join(parts)})"
+
+
+def _translate_detail_for_discord(detail: str) -> str:
+    """Rend les lignes de detail plus lisibles dans Discord."""
+    text = str(detail)
+
+    if text.startswith("Permissions modifiees : ") or text.startswith("Permissions modifiées : "):
+        prefix, _, values = text.partition(": ")
+        old_mode, _, new_mode = values.partition(" -> ")
+        if old_mode and new_mode:
+            return (
+                "Permissions modifiees : "
+                f"{_describe_octal_mode(old_mode)} -> {_describe_octal_mode(new_mode)}"
+            )
+
+    if text.startswith(" - "):
+        text = text[3:]
+
+    if text.lower().startswith("ancien etat :") or text.lower().startswith("ancien état :") \
+       or text.lower().startswith("nouvel etat :") or text.lower().startswith("nouvel état :"):
+        label, _, payload = text.partition(": ")
+        try:
+            state = ast.literal_eval(payload)
+        except Exception:
+            return text
+
+        if isinstance(state, dict) and "mode" in state:
+            state = dict(state)
+            state["mode"] = _describe_octal_mode(state["mode"])
+            return f"{label}: {state}"
+
+    return text
+
+
 def send_discord_alert(entry: dict) -> None:
     """Envoie une notification Discord pour une alerte groupee."""
     cfg = load_discord_config()
     webhook_url = cfg.get("webhook_url", "").strip()
-    panel_url   = cfg.get("panel_url", "http://localhost:5000").strip()
+    panel_url   = cfg.get("panel_url", DEFAULT_PANEL_URL).strip()
 
     if not webhook_url:
         app.logger.warning("Discord non configure: webhook absent")
@@ -70,7 +148,7 @@ def send_discord_alert(entry: dict) -> None:
     safe_msg = _truncate_discord_text(msg, 800)
     desc_lines = [f"```{safe_msg}```"]
     for detail in details:
-        desc_lines.append(f"- {_truncate_discord_text(str(detail), 350)}")
+        desc_lines.append(f"- {_truncate_discord_text(_translate_detail_for_discord(detail), 900)}")
     desc_lines.append(f"\n**[Voir le panel de surveillance]({panel_url})**")
 
     payload = {
@@ -334,7 +412,7 @@ def set_discord_config():
     data = flask_request.get_json(force=True)
     save_discord_config({
         "webhook_url": data.get("webhook_url", ""),
-        "panel_url":   data.get("panel_url",   "http://localhost:5000"),
+        "panel_url":   data.get("panel_url",   DEFAULT_PANEL_URL),
     })
     return jsonify({"ok": True})
 
