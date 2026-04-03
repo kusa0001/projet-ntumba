@@ -605,6 +605,11 @@ async function testDiscord() {
   const webhookUrl = document.getElementById('discord-webhook').value.trim();
   const panelUrl   = document.getElementById('discord-panel-url').value.trim();
   if (!webhookUrl) { showSimpleToast('⚠ Entrez d\'abord une URL de webhook', 'warn'); return; }
+  await fetch('/api/discord-config', {
+    method: 'POST',
+    body: JSON.stringify({ webhook_url: webhookUrl, panel_url: panelUrl || 'http://localhost:5000' }),
+    headers: {'Content-Type': 'application/json'}
+  });
   const payload = {
     embeds: [{
       title: '🧪 Test de notification — Surveillance Fichiers',

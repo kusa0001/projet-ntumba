@@ -21,6 +21,8 @@ DISCORD_CFG_FILE  = os.path.join(os.path.dirname(os.path.abspath(__file__)), "di
 # Liste des queues — une par client SSE connecté
 _subscribers: list[queue.Queue] = []
 _subscribers_lock = threading.Lock()
+_tail_thread_lock = threading.Lock()
+_tail_thread_started = False
 
 
 # ── Discord config ────────────────────────────────────────────────────────────
@@ -216,16 +218,31 @@ def tail_log() -> None:
         time.sleep(0.4)
 
 
+def ensure_tail_thread_started() -> None:
+    """Demarre le thread de surveillance des logs une seule fois."""
+    global _tail_thread_started
+    if _tail_thread_started:
+        return
+
+    with _tail_thread_lock:
+        if _tail_thread_started:
+            return
+        threading.Thread(target=tail_log, daemon=True).start()
+        _tail_thread_started = True
+
+
 # ── Routes ────────────────────────────────────────────────────────────────────
 
 @app.route("/")
 def index():
+    ensure_tail_thread_started()
     return render_template("index.html")
 
 
 @app.route("/api/logs")
 def get_logs():
     """Retourne tout l'historique groupé en JSON."""
+    ensure_tail_thread_started()
     raw = []
     if os.path.exists(LOG_FILE):
         with open(LOG_FILE, "r", encoding="utf-8", errors="replace") as f:
@@ -238,6 +255,7 @@ def get_logs():
 
 @app.route("/api/stats")
 def get_stats():
+    ensure_tail_thread_started()
     counts = {"INFO": 0, "WARNING": 0, "ERROR": 0, "TOTAL": 0}
     if os.path.exists(LOG_FILE):
         with open(LOG_FILE, "r", encoding="utf-8", errors="replace") as f:
@@ -253,6 +271,7 @@ def get_stats():
 
 @app.route("/api/stream")
 def stream():
+    ensure_tail_thread_started()
     q: queue.Queue = queue.Queue(maxsize=200)
     with _subscribers_lock:
         _subscribers.append(q)
@@ -279,11 +298,13 @@ def stream():
 
 @app.route("/api/discord-config", methods=["GET"])
 def get_discord_config():
+    ensure_tail_thread_started()
     return jsonify(load_discord_config())
 
 
 @app.route("/api/discord-config", methods=["POST"])
 def set_discord_config():
+    ensure_tail_thread_started()
     data = flask_request.get_json(force=True)
     save_discord_config({
         "webhook_url": data.get("webhook_url", ""),
@@ -295,7 +316,7 @@ def set_discord_config():
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    threading.Thread(target=tail_log, daemon=True).start()
+    ensure_tail_thread_started()
     print("\n  File System Monitor — Interface Web")
     print("  ➜  http://localhost:5000\n")
     app.run(host="0.0.0.0", port=5000, debug=False, threaded=True)
