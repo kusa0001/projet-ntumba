@@ -9,6 +9,7 @@ import json
 import time
 import queue
 import threading
+import urllib.error
 import urllib.request
 
 from flask import Flask, Response, render_template, jsonify, request as flask_request
@@ -42,35 +43,47 @@ def save_discord_config(data: dict) -> None:
         json.dump(data, f, indent=4)
 
 
+def _truncate_discord_text(text: str, limit: int) -> str:
+    """Respecte les limites Discord tout en gardant un message lisible."""
+    if len(text) <= limit:
+        return text
+    return text[: max(0, limit - 3)].rstrip() + "..."
+
+
 def send_discord_alert(entry: dict) -> None:
-    """Envoie une notification Discord pour une alerte groupée."""
+    """Envoie une notification Discord pour une alerte groupee."""
     cfg = load_discord_config()
     webhook_url = cfg.get("webhook_url", "").strip()
     panel_url   = cfg.get("panel_url", "http://localhost:5000").strip()
 
     if not webhook_url:
+        app.logger.warning("Discord non configure: webhook absent")
         return
 
     msg       = entry.get("message", "")
     details   = entry.get("details", [])
     timestamp = entry.get("timestamp", "")
 
-    # Nom du fichier extrait du chemin dans le message
     path_part = msg.split(":")[-1].strip() if ":" in msg else ""
     filename  = os.path.basename(path_part) if path_part else "fichier"
 
-    # Construction de la description de l'embed
-    desc_lines = [f"```{msg}```"]
-    for d in details:
-        desc_lines.append(f"• {d}")
-    desc_lines.append(f"\n🔗 **[Voir le panel de surveillance]({panel_url})**")
+    safe_msg = _truncate_discord_text(msg, 800)
+    desc_lines = [f"```{safe_msg}```"]
+    for detail in details:
+        desc_lines.append(f"- {_truncate_discord_text(str(detail), 350)}")
+    desc_lines.append(f"\n**[Voir le panel de surveillance]({panel_url})**")
 
     payload = {
         "embeds": [{
-            "title":       f"🚨 Nouvelle alerte : modification détectée sur `{filename}`",
-            "description": "\n".join(desc_lines),
-            "color":       0xDC2626,
-            "footer":      {"text": f"File System Monitor  •  {timestamp}"},
+            "title": _truncate_discord_text(
+                f"Nouvelle alerte : modification detectee sur `{filename}`",
+                250,
+            ),
+            "description": _truncate_discord_text("\n".join(desc_lines), 4000),
+            "color": 0xDC2626,
+            "footer": {
+                "text": _truncate_discord_text(f"File System Monitor - {timestamp}", 200)
+            },
         }]
     }
 
@@ -82,9 +95,14 @@ def send_discord_alert(entry: dict) -> None:
         method="POST",
     )
     try:
-        urllib.request.urlopen(req, timeout=5)
-    except Exception:
-        pass
+        with urllib.request.urlopen(req, timeout=5) as response:
+            if getattr(response, "status", 200) >= 400:
+                app.logger.error("Discord webhook HTTP %s", response.status)
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")
+        app.logger.error("Discord webhook refuse la requete (%s): %s", exc.code, body)
+    except Exception as exc:
+        app.logger.exception("Echec envoi Discord: %s", exc)
 
 
 # ── Log parsing & grouping ────────────────────────────────────────────────────
