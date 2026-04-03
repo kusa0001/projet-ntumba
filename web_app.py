@@ -91,7 +91,15 @@ def send_discord_alert(entry: dict) -> None:
     req  = urllib.request.Request(
         webhook_url,
         data=data,
-        headers={"Content-Type": "application/json"},
+        headers={
+            "Content-Type": "application/json",
+            "Accept": "application/json, text/plain, */*",
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/135.0.0.0 Safari/537.36"
+            ),
+        },
         method="POST",
     )
     try:
